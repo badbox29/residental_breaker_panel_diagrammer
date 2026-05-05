@@ -5,3 +5,6 @@ Nothing fancy, just a simple breaker panel diagrammer I worked up utilizing AI a
 I don't plan to do any feature requests, as this is just sharing something I made for myself, so what you see is what you get.  Feel free to modify the work to suite your needs.
 
 Open the breaker_panel.png file to see the output this generates.  Handy for me as a home owner so maybe handy for you as well.  Cheers!
+
+Demo here:
+https://badbox29.github.io/residental_breaker_panel_diagrammer/
