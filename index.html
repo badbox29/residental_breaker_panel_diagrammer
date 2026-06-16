@@ -841,6 +841,27 @@ body.exporting .no-export { display: none !important; }
   </div>
 </dialog>
 
+<!-- Print / Export Dialog -->
+<dialog id="printDialog">
+  <h3>Print or Export</h3>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">
+    Choose how you'd like to save your panel diagram.
+  </p>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
+    <button class="btn btn-primary" style="justify-content:flex-start;gap:12px;" onclick="document.getElementById('printDialog').close(); window.print();">
+      <span style="font-size:16px;">🖨</span>
+      <span><strong>Print / Save as PDF</strong><br><span style="font-weight:400;opacity:.8;font-size:12px;">Best quality for paper or archiving</span></span>
+    </button>
+    <button class="btn" style="justify-content:flex-start;gap:12px;" id="print-dialog-png-btn">
+      <span style="font-size:16px;">🖼</span>
+      <span><strong>Export PNG Image</strong><br><span style="font-weight:400;opacity:.8;font-size:12px;">Raster image for digital sharing</span></span>
+    </button>
+  </div>
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('printDialog').close()">Cancel</button>
+  </div>
+</dialog>
+
 <!-- Migration Dialog -->
 <dialog id="migrationDialog">
   <div class="migration-icon">📦</div>
@@ -1507,20 +1528,15 @@ function clearStorage() {
    PRINT / PNG EXPORT
 ═══════════════════════════════════════════════════════════════ */
 function printPanel() {
-  // Save current theme, switch to light for print
+  // Wire up the PNG button with current dark state captured now
   const wasDark = document.body.classList.contains('dark');
-
-  // Use browser print (which triggers @media print with light-mode tokens)
-  // Offer PNG as a secondary option
-  const choice = confirm(
-    'Click OK to Print (or Save as PDF) — best for paper and high quality.\n\nClick Cancel to export a PNG image instead.'
-  );
-
-  if (choice) {
-    window.print();
-  } else {
+  const pngBtn = document.getElementById('print-dialog-png-btn');
+  // Replace onclick each time so wasDark is always fresh
+  pngBtn.onclick = () => {
+    document.getElementById('printDialog').close();
     exportPNG(wasDark);
-  }
+  };
+  document.getElementById('printDialog').showModal();
 }
 
 async function exportPNG(wasDark) {
