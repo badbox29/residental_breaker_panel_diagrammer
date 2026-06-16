@@ -491,15 +491,25 @@ body {
    DIALOGS
 ═══════════════════════════════════════════════ */
 dialog {
+  /* Force true centering regardless of browser defaults */
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+
   border: none;
   border-radius: 12px;
   padding: 22px 24px;
   width: 340px;
+  max-width: 94vw;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--bg-card);
   color: var(--text-primary);
-  box-shadow: 0 16px 48px rgba(0,0,0,.2);
+  box-shadow: 0 16px 48px rgba(0,0,0,.35);
 }
-dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog::backdrop { background: rgba(0,0,0,.5); }
 dialog h3 {
   font-size: 15px;
   font-weight: 700;
@@ -700,35 +710,27 @@ body.exporting .no-export { display: none !important; }
   .legend-item { font-size: 10px !important; }
   .legend-swatch { width: 20px !important; height: 12px !important; font-size: 7px !important; }
 
-  /* ── Fit to page: scale the panel to fill the printable area ── */
+  /* ── Fit to one page: zoom export-container to fill printable width ──
+     We can't know the exact print width in CSS, so we use a JS-calculated
+     zoom value injected via the _print_page_style tag. The CSS here just
+     sets the anchor point. ── */
   body.print-fit #export-container,
   body:not(.print-natural):not(.print-landscape) #export-container {
-    transform-origin: top left;
-  }
-  body.print-fit #panel-container,
-  body:not(.print-natural):not(.print-landscape) #panel-container {
-    display: flex;
-    justify-content: center;
-  }
-  body.print-fit #panel,
-  body:not(.print-natural):not(.print-landscape) #panel {
     width: 100% !important;
-    grid-template-columns: repeat(2, 1fr) !important;
+    zoom: var(--print-zoom, 1);
   }
 
-  /* ── Natural / full size: no scaling ── */
-  body.print-natural #panel {
-    /* unchanged */
+  /* ── Natural / full size: no scaling, panel at authored size ── */
+  body.print-natural #export-container {
+    zoom: 1;
+    width: auto !important;
+    margin: 0 auto !important;
   }
 
-  /* ── Landscape ── */
-  body.print-landscape { writing-mode: initial; }
-}
-
-/* Landscape @page rule must live outside @media print in some browsers */
-@media print {
-  body.print-landscape {
-    /* triggers landscape via JS: we set a <style> tag dynamically */
+  /* ── Landscape handled via dynamic @page + zoom in executePrint() ── */
+  body.print-landscape #export-container {
+    width: 100% !important;
+    zoom: var(--print-zoom, 1);
   }
 }
 </style>
@@ -1629,21 +1631,37 @@ function executePrint() {
   const layout = document.querySelector('input[name="print-layout"]:checked')?.value || 'fit';
   document.getElementById('printDialog').close();
 
-  // Remove any previous print-layout classes
   document.body.classList.remove('print-fit', 'print-natural', 'print-landscape');
   document.body.classList.add('print-' + layout);
 
-  // Inject a dynamic @page size rule for landscape (CSS @page size can't be
-  // set via class alone in all browsers)
   let dynStyle = document.getElementById('_print_page_style');
   if (!dynStyle) {
     dynStyle = document.createElement('style');
     dynStyle.id = '_print_page_style';
     document.head.appendChild(dynStyle);
   }
-  dynStyle.textContent = layout === 'landscape'
+
+  // Calculate zoom so the export-container fills the printable page width.
+  // Standard page widths minus 20mm margins (10mm each side):
+  //   Portrait  A4: 210 - 20 = 190mm  ≈ 719px @96dpi  (conservative: use 700px)
+  //   Portrait  Letter: 216 - 20 = 196mm ≈ 741px        (conservative: use 720px)
+  // We use the container's actual rendered width as the source.
+  const container = document.getElementById('export-container');
+  const containerW = container.offsetWidth;
+
+  // Target printable width in px at 96dpi — portrait letter is ~720px, landscape ~950px
+  const printableW = layout === 'landscape' ? 950 : 720;
+  const zoom = layout === 'natural' ? 1 : Math.min(1, printableW / containerW);
+  const zoomPct = (zoom * 100).toFixed(2) + '%';
+
+  const pageRule = layout === 'landscape'
     ? '@page { size: landscape; margin: 10mm; }'
     : '@page { size: portrait;  margin: 10mm; }';
+
+  dynStyle.textContent = `
+    ${pageRule}
+    :root { --print-zoom: ${zoom}; }
+  `;
 
   setTimeout(() => {
     window.print();
