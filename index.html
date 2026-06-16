@@ -692,6 +692,12 @@ body.exporting .no-export { display: none !important; }
   #panel-container { margin: 6px 0 !important; }
   #panel { border-radius: 6px !important; }
 
+  /* Keep 2-pole pairs from splitting across pages */
+  .slot:has(+ .slot > .breaker.subordinate) { page-break-after: avoid; break-after: avoid; }
+  .slot:has(.breaker.subordinate)           { page-break-before: avoid; break-before: avoid; }
+  /* Also avoid breaking inside any single slot */
+  .slot { page-break-inside: avoid; break-inside: avoid; }
+
   /* ── Footer: compact two-column grid ── */
   .info-footer {
     margin-top: 6px !important;
