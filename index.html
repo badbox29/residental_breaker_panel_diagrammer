@@ -541,6 +541,58 @@ dialog .dialog-btns {
 }
 
 /* ═══════════════════════════════════════════════
+   MIGRATION MODAL
+═══════════════════════════════════════════════ */
+#migrationDialog {
+  width: 400px;
+  max-width: 92vw;
+}
+#migrationDialog .migration-icon {
+  font-size: 32px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+#migrationDialog p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+#migrationDialog .migration-meta {
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  line-height: 1.8;
+}
+#migrationDialog .migration-meta strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+#migrationDialog .migration-notice {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  background: var(--blue-dim);
+  border-left: 3px solid var(--blue);
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+#migrationDialog .migration-notice .notice-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ═══════════════════════════════════════════════
    HIDE EDIT CHROME DURING EXPORT & PRINT
 ═══════════════════════════════════════════════ */
 body.exporting .no-export { display: none !important; }
@@ -782,6 +834,24 @@ body.exporting .no-export { display: none !important; }
   <div class="dialog-btns">
     <button class="btn" onclick="document.getElementById('footerDialog').close()">Cancel</button>
     <button class="btn btn-primary" onclick="saveFooterDialog()">Save</button>
+  </div>
+</dialog>
+
+<!-- Migration Dialog -->
+<dialog id="migrationDialog">
+  <div class="migration-icon">📦</div>
+  <h3>Legacy Panel File Detected</h3>
+  <p>This file was created with an older version of the Breaker Panel Editor. It will be imported and automatically upgraded to the current format.</p>
+  <div class="migration-meta" id="migration-meta">
+    <!-- populated by JS -->
+  </div>
+  <div class="migration-notice">
+    <span class="notice-icon">💡</span>
+    <span>After reviewing your panel, use <strong>Export JSON</strong> to save a fresh copy in the current format. You can then retire the old file.</span>
+  </div>
+  <div class="dialog-btns">
+    <button class="btn" id="migration-cancel-btn" onclick="cancelMigration()">Cancel</button>
+    <button class="btn btn-primary" onclick="confirmMigration()">Import &amp; Upgrade</button>
   </div>
 </dialog>
 
@@ -1313,8 +1383,12 @@ function exportJSON() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   IMPORT JSON
+   IMPORT JSON — with legacy migration detection
 ═══════════════════════════════════════════════════════════════ */
+
+// Holds parsed data between file read and user confirmation
+let _pendingImport = null;
+
 function importJSON() {
   const input = document.createElement('input');
   input.type = 'file';
@@ -1326,8 +1400,19 @@ function importJSON() {
     reader.onload = ev => {
       try {
         const data = JSON.parse(ev.target.result);
-        applyPayload(data);
-        showToast('Panel imported.');
+        if (!data || !Array.isArray(data.breakers)) {
+          throw new Error('Missing or invalid "breakers" array — this does not appear to be a panel file.');
+        }
+        const version = data.version || 1;
+        if (version < 3) {
+          // Legacy file — show migration modal
+          _pendingImport = data;
+          showMigrationModal(data, file.name);
+        } else {
+          // Current format — import directly
+          applyPayload(data);
+          showToast('Panel imported.');
+        }
       } catch(err) {
         alert('Import failed — invalid or corrupted file.\n\n' + err.message);
       }
@@ -1335,6 +1420,72 @@ function importJSON() {
     reader.readAsText(file);
   };
   input.click();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MIGRATION MODAL
+═══════════════════════════════════════════════════════════════ */
+function showMigrationModal(data, filename) {
+  const version  = data.version || 1;
+  const count    = data.breakers?.length ?? 0;
+  const mainAmps = data.mainAmps || 200;
+  const address  = data.header?.address || '(no address saved)';
+
+  // Describe what's changing in this migration
+  const changes = migrationChangelog(version);
+
+  document.getElementById('migration-meta').innerHTML = `
+    <div><strong>File:</strong> ${escapeHtml(filename)}</div>
+    <div><strong>Format version:</strong> v${version} → v3 (current)</div>
+    <div><strong>Main disconnect:</strong> ${mainAmps}A</div>
+    <div><strong>Breakers found:</strong> ${count}</div>
+    <div><strong>Address:</strong> ${escapeHtml(address)}</div>
+    ${changes ? `<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);"><strong>What's being upgraded:</strong><br>${changes}</div>` : ''}
+  `;
+
+  document.getElementById('migrationDialog').showModal();
+}
+
+function migrationChangelog(fromVersion) {
+  const notes = [];
+  if (fromVersion < 2) {
+    notes.push('• Header/footer fields added (address, install date, location, manufacturer, etc.)');
+  }
+  if (fromVersion < 3) {
+    notes.push('• 2-pole breaker pairs upgraded to use stable pair IDs instead of label matching');
+    notes.push('• Spare slot type added');
+    notes.push('• Slot count recorded for accurate panel reconstruction');
+  }
+  return notes.join('<br>');
+}
+
+function confirmMigration() {
+  if (!_pendingImport) return;
+  try {
+    applyPayload(_pendingImport);
+    _pendingImport = null;
+    document.getElementById('migrationDialog').close();
+    // Mark as changed so autosave and the export reminder are both triggered
+    markChanges();
+    showToast('Panel imported and upgraded to v3 — remember to Export JSON to refresh your file.');
+  } catch(err) {
+    _pendingImport = null;
+    document.getElementById('migrationDialog').close();
+    alert('Migration failed: ' + err.message);
+  }
+}
+
+function cancelMigration() {
+  _pendingImport = null;
+  document.getElementById('migrationDialog').close();
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 /* ═══════════════════════════════════════════════════════════════
