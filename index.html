@@ -606,27 +606,25 @@ body.exporting .no-export { display: none !important; }
    PRINT STYLES
 ═══════════════════════════════════════════════ */
 @media print {
-  /* Force light mode regardless of current theme */
+  /* ── Reset tokens to light mode regardless of current theme ── */
   body, body.dark, html {
     --bg-page:        #ffffff;
     --bg-card:        #ffffff;
-    --bg-card2:       #f7f7f7;
-    --bg-input:       #ebebeb;
+    --bg-card2:       #f5f5f5;
     --border:         #cccccc;
-    --border-light:   #bbbbbb;
     --text-primary:   #111111;
-    --text-secondary: #555555;
-    --text-muted:     #888888;
+    --text-secondary: #444444;
+    --text-muted:     #777777;
     --shadow:         none;
-    --panel-bg:       #e4e4e4;
+    --panel-bg:       #e2e2e2;
     --panel-border:   #bbbbbb;
     --slot-empty-bg:  #cccccc;
     --slot-empty-bd:  #aaaaaa;
     --main-bg:        #c0392b;
     --main-fg:        #ffffff;
-    --num-color:      #999999;
+    --num-color:      #888888;
 
-    /* Full saturated badge colors for print */
+    /* Full saturated badge colors */
     --type-std-bg:    #00bcd4; --type-std-fg:    #000000;
     --type-gfci-bg:   #4caf50; --type-gfci-fg:   #000000;
     --type-afci-bg:   #9e9e9e; --type-afci-fg:   #ffffff;
@@ -635,24 +633,102 @@ body.exporting .no-export { display: none !important; }
     --type-tandem-bg: #ff9800; --type-tandem-fg: #000000;
     --type-surge-bg:  #3b82f6; --type-surge-fg:  #ffffff;
     --type-spare-bg:  #d4d4d4; --type-spare-fg:  #555555;
-
-    /* Breaker card — light/neutral for print */
-    --breaker-bg:     #444444;
+    --breaker-bg:     #3a3a3a;
     --breaker-fg:     #ffffff;
 
     background: #fff !important;
     color: #111 !important;
   }
 
-  body { padding: 0; }
-  .topbar, .toolbar, #autosave-status, .no-export, .no-print { display: none !important; }
+  /* ── Suppress all UI chrome ── */
+  body { padding: 0 !important; margin: 0 !important; }
+  .topbar, .toolbar, .page-content > :not(#export-container),
+  .no-export, .no-print, .info-edit-btn { display: none !important; }
 
+  /* ── Page setup ── */
+  @page { margin: 10mm; }
+  body.print-landscape { }
+  @page { size: portrait; }
+  body.print-landscape + * { } /* placeholder — landscape handled below */
+
+  /* ── Export container: full width, no decorations ── */
   #export-container {
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 12px;
-    max-width: 100%;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  /* ── Header: one compact line ── */
+  .info-header {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 16px;
+    padding-bottom: 6px !important;
+    margin-bottom: 8px !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  .info-title { display: none !important; }  /* "Panel Information" label — not needed */
+  .info-row { display: flex !important; flex-wrap: wrap; gap: 4px 16px; }
+  .info-cell { font-size: 10px !important; }
+  .info-cell strong { font-size: 9px !important; }
+  .info-cell span { font-size: 10px !important; font-family: monospace !important; }
+
+  /* ── Panel grid ── */
+  #panel-container { margin: 6px 0 !important; }
+  #panel { border-radius: 6px !important; }
+
+  /* ── Footer: compact two-column grid ── */
+  .info-footer {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    border-top: 1px solid #ccc !important;
+  }
+  .info-footer .info-row { margin: 0 !important; }
+
+  /* ── Legend ── */
+  .legend {
+    margin-top: 6px !important;
+    padding-top: 6px !important;
+    flex-wrap: wrap;
+    gap: 4px 8px !important;
+  }
+  .legend-item { font-size: 10px !important; }
+  .legend-swatch { width: 20px !important; height: 12px !important; font-size: 7px !important; }
+
+  /* ── Fit to page: scale the panel to fill the printable area ── */
+  body.print-fit #export-container,
+  body:not(.print-natural):not(.print-landscape) #export-container {
+    transform-origin: top left;
+  }
+  body.print-fit #panel-container,
+  body:not(.print-natural):not(.print-landscape) #panel-container {
+    display: flex;
+    justify-content: center;
+  }
+  body.print-fit #panel,
+  body:not(.print-natural):not(.print-landscape) #panel {
+    width: 100% !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ── Natural / full size: no scaling ── */
+  body.print-natural #panel {
+    /* unchanged */
+  }
+
+  /* ── Landscape ── */
+  body.print-landscape { writing-mode: initial; }
+}
+
+/* Landscape @page rule must live outside @media print in some browsers */
+@media print {
+  body.print-landscape {
+    /* triggers landscape via JS: we set a <style> tag dynamically */
   }
 }
 </style>
@@ -842,23 +918,35 @@ body.exporting .no-export { display: none !important; }
 </dialog>
 
 <!-- Print / Export Dialog -->
-<dialog id="printDialog">
+<dialog id="printDialog" style="width:420px;max-width:94vw;">
   <h3>Print or Export</h3>
-  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">
-    Choose how you'd like to save your panel diagram.
-  </p>
-  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;">
-    <button class="btn btn-primary" style="justify-content:flex-start;gap:12px;" onclick="document.getElementById('printDialog').close(); window.print();">
-      <span style="font-size:16px;">🖨</span>
-      <span><strong>Print / Save as PDF</strong><br><span style="font-weight:400;opacity:.8;font-size:12px;">Best quality for paper or archiving</span></span>
-    </button>
-    <button class="btn" style="justify-content:flex-start;gap:12px;" id="print-dialog-png-btn">
-      <span style="font-size:16px;">🖼</span>
-      <span><strong>Export PNG Image</strong><br><span style="font-weight:400;opacity:.8;font-size:12px;">Raster image for digital sharing</span></span>
-    </button>
+
+  <div style="margin-bottom:14px;">
+    <label style="text-transform:uppercase;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text-muted);margin-bottom:8px;display:block;">Layout</label>
+    <div style="display:flex;flex-direction:column;gap:6px;" id="print-layout-options">
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+        <input type="radio" name="print-layout" value="fit" checked style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Fit to one page</strong>Scales the entire panel to fill a single sheet — recommended for taping to your panel.</span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+        <input type="radio" name="print-layout" value="natural" style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Full size / multi-sheet</strong>Prints at 100% — use if your panel is large and you want to span multiple sheets.</span>
+      </label>
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
+        <input type="radio" name="print-layout" value="landscape" style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Landscape, fit to one page</strong>Rotates to landscape orientation — good for wide panels.</span>
+      </label>
+    </div>
   </div>
+
+  <div style="font-size:11px;color:var(--text-muted);background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:16px;line-height:1.5;">
+    💡 After the print dialog opens, set <strong>Margins → None</strong> and enable <strong>Background graphics</strong> in your browser's print settings for best results.
+  </div>
+
   <div class="dialog-btns">
+    <button class="btn" id="print-dialog-png-btn">🖼 Export PNG</button>
     <button class="btn" onclick="document.getElementById('printDialog').close()">Cancel</button>
+    <button class="btn btn-primary" onclick="executePrint()">🖨 Print</button>
   </div>
 </dialog>
 
@@ -1528,15 +1616,42 @@ function clearStorage() {
    PRINT / PNG EXPORT
 ═══════════════════════════════════════════════════════════════ */
 function printPanel() {
-  // Wire up the PNG button with current dark state captured now
   const wasDark = document.body.classList.contains('dark');
   const pngBtn = document.getElementById('print-dialog-png-btn');
-  // Replace onclick each time so wasDark is always fresh
   pngBtn.onclick = () => {
     document.getElementById('printDialog').close();
     exportPNG(wasDark);
   };
   document.getElementById('printDialog').showModal();
+}
+
+function executePrint() {
+  const layout = document.querySelector('input[name="print-layout"]:checked')?.value || 'fit';
+  document.getElementById('printDialog').close();
+
+  // Remove any previous print-layout classes
+  document.body.classList.remove('print-fit', 'print-natural', 'print-landscape');
+  document.body.classList.add('print-' + layout);
+
+  // Inject a dynamic @page size rule for landscape (CSS @page size can't be
+  // set via class alone in all browsers)
+  let dynStyle = document.getElementById('_print_page_style');
+  if (!dynStyle) {
+    dynStyle = document.createElement('style');
+    dynStyle.id = '_print_page_style';
+    document.head.appendChild(dynStyle);
+  }
+  dynStyle.textContent = layout === 'landscape'
+    ? '@page { size: landscape; margin: 10mm; }'
+    : '@page { size: portrait;  margin: 10mm; }';
+
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('print-fit', 'print-natural', 'print-landscape');
+      dynStyle.textContent = '';
+    }, 1200);
+  }, 80);
 }
 
 async function exportPNG(wasDark) {
