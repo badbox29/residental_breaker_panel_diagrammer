@@ -557,6 +557,60 @@ dialog .dialog-btns {
 }
 
 /* ═══════════════════════════════════════════════
+   HELP MODAL
+═══════════════════════════════════════════════ */
+.help-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.help-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.help-badge {
+  flex-shrink: 0;
+  width: 46px;
+  height: 22px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+.help-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+.help-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.help-text span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+/* ═══════════════════════════════════════════════
    MIGRATION MODAL
 ═══════════════════════════════════════════════ */
 #migrationDialog {
@@ -785,6 +839,8 @@ body.exporting .no-export { display: none !important; }
   <div class="toolbar-sep"></div>
   <button class="btn btn-danger" onclick="clearPanel()">🧹 Clear Panel</button>
   <button class="btn btn-danger" onclick="clearStorage()">🗑 Delete Saved</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn" onclick="document.getElementById('helpDialog').showModal()">❓ Help</button>
   <span id="autosave-status">No changes pending.</span>
 </div>
 
@@ -964,6 +1020,72 @@ body.exporting .no-export { display: none !important; }
   </div>
 </dialog>
 
+<!-- Help / Type Reference Dialog -->
+<dialog id="helpDialog" style="width:500px;">
+  <h3>Breaker Type Reference</h3>
+  <div class="help-rows">
+      <div class="help-row">
+        <div class="help-badge" style="background:#00bcd4;color:#000;">STD</div>
+        <div class="help-text">
+          <strong>Standard</strong>
+          <span>A basic thermal-magnetic breaker. Protects against overloads and short circuits. The most common type in older and simpler installations.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#4caf50;color:#000;">GFCI</div>
+        <div class="help-text">
+          <strong>Ground Fault CI</strong>
+          <span>Trips when it detects current leaking to ground — even amounts too small to trip a standard breaker. Required in wet areas like bathrooms, kitchens, garages, and outdoors.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#9e9e9e;color:#fff;">AFCI</div>
+        <div class="help-text">
+          <strong>Arc Fault CI</strong>
+          <span>Detects dangerous arcing in wiring — the kind caused by damaged insulation or loose connections that can start fires. Required in bedrooms and living areas by modern code.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#e040fb;color:#fff;">DUAL</div>
+        <div class="help-text">
+          <strong>Dual Function (GFCI+AFCI)</strong>
+          <span>Combines both GFCI and AFCI protection in a single breaker. Required by current NEC code in most living spaces and wet areas.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#eeeeee;color:#000;">CAFI</div>
+        <div class="help-text">
+          <strong>Combination Arc Fault CI</strong>
+          <span>Similar to AFCI but detects both parallel and series arc faults. Often used interchangeably with AFCI; technically offers broader arc detection.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#ff9800;color:#000;">TAND</div>
+        <div class="help-text">
+          <strong>Tandem</strong>
+          <span>Two breakers sharing a single slot space. Used to fit more circuits into a full panel. Also called "slim," "half-size," or "piggyback" breakers. Not all panels accept them.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#3b82f6;color:#fff;">SURGE</div>
+        <div class="help-text">
+          <strong>Surge Protection</strong>
+          <span>A whole-panel surge protector installed as a breaker-sized device. Protects all downstream circuits from voltage spikes.</span>
+        </div>
+      </div>
+      <div class="help-row">
+        <div class="help-badge" style="background:#d4d4d4;color:#555;">SPARE</div>
+        <div class="help-text">
+          <strong>Spare</strong>
+          <span>A slot with a breaker installed but no active load connected, or an open slot reserved for future use.</span>
+        </div>
+      </div>
+  </div>
+  <div class="dialog-btns" style="margin-top:16px;">
+    <button class="btn btn-primary" onclick="document.getElementById('helpDialog').close()">Close</button>
+  </div>
+</dialog>
+
 <!-- Migration Dialog -->
 <dialog id="migrationDialog">
   <div class="migration-icon">📦</div>
@@ -1016,12 +1138,16 @@ const BREAKER_TYPES = [
   { key: 'Spare',    label: 'Spare',           abbr: 'SPARE'},
 ];
 
+const LEGEND_TIPS = {"Standard": "Standard: Basic thermal-magnetic breaker. Protects against overloads and short circuits.", "GFCI": "GFCI: Trips when current leaks to ground. Required in bathrooms, kitchens, garages, and outdoors.", "AFCI": "AFCI: Detects dangerous arcing from damaged wiring. Required in bedrooms and living areas by modern code.", "Dual": "Dual (GFCI+AFCI): Combines both protections. Required by current NEC code in most living and wet areas.", "CAFI": "CAFI: Detects both parallel and series arc faults. Broader protection than standard AFCI.", "Tandem": "Tandem: Two breakers in one slot space. Also called slim or piggyback breakers. Not all panels accept them.", "Surge": "Surge Protection: Whole-panel surge protector. Shields all downstream circuits from voltage spikes.", "Spare": "Spare: Installed breaker with no active load, or an open slot reserved for future use."};
+
 function buildLegend() {
   const el = document.getElementById('legend');
   el.innerHTML = '<span class="legend-label">Legend</span>';
   BREAKER_TYPES.forEach(t => {
     const item = document.createElement('div');
     item.className = 'legend-item';
+    item.title = LEGEND_TIPS[t.key] || t.label;
+    item.style.cursor = 'help';
     item.innerHTML = `<div class="legend-swatch ls-${t.key}">${t.abbr}</div><span>${t.label}</span>`;
     el.appendChild(item);
   });
