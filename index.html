@@ -226,6 +226,12 @@ body {
   margin-left: auto;
   font-family: 'JetBrains Mono', monospace;
 }
+#last-saved {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
 
 /* ═══════════════════════════════════════════════
    EXPORT CONTAINER (wraps everything that prints)
@@ -829,6 +835,7 @@ body.exporting .no-export { display: none !important; }
 ════════════════════════════════════════════ -->
 <div class="toolbar no-export">
   <button class="btn" onclick="addRow()">➕ Add Row</button>
+  <button class="btn" id="remove-row-btn" onclick="removeRow()" title="Remove the last row (only if both slots are empty)">➖ Remove Row</button>
   <div class="toolbar-sep"></div>
   <button class="btn" id="undo-btn" onclick="undo()" disabled title="Undo (Ctrl+Z)">↩ Undo</button>
   <button class="btn" id="redo-btn" onclick="redo()" disabled title="Redo (Ctrl+Y)">↪ Redo</button>
@@ -846,6 +853,7 @@ body.exporting .no-export { display: none !important; }
   <div class="toolbar-sep"></div>
   <button class="btn" onclick="document.getElementById('helpDialog').showModal()">❓ Help</button>
   <span id="autosave-status">No changes pending.</span>
+  <span id="last-saved"></span>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -1218,6 +1226,36 @@ function addRow() {
   addSlotElement(nextIndex);
   addSlotElement(nextIndex + 1);
   markChanges();
+  updateRemoveRowUI();
+}
+
+function removeRow() {
+  const slots = [...panel.querySelectorAll('.slot')];
+  if (slots.length < 4) {
+    showToast('Panel must have at least 2 rows.');
+    return;
+  }
+  const lastTwo = slots.slice(-2);
+  // Only remove if both slots in the last row are empty
+  const occupied = lastTwo.some(s => s.querySelector('.breaker'));
+  if (occupied) {
+    showToast('Last row has breakers — delete them first.');
+    return;
+  }
+  snapshotForUndo();
+  lastTwo.forEach(s => s.remove());
+  markChanges();
+  updateRemoveRowUI();
+}
+
+function updateRemoveRowUI() {
+  const btn = document.getElementById('remove-row-btn');
+  if (!btn) return;
+  const slots = [...panel.querySelectorAll('.slot')];
+  // Disable if at minimum rows or last row is occupied
+  const atMin = slots.length <= 4;
+  const lastOccupied = slots.slice(-2).some(s => s.querySelector('.breaker'));
+  btn.disabled = atMin || lastOccupied;
 }
 
 function getSlotEl(index) {
@@ -1575,6 +1613,14 @@ function updateAutosaveDisplay() {
     : 'No changes pending.';
 }
 
+function updateLastSaved() {
+  const el = document.getElementById('last-saved');
+  if (!el) return;
+  const now = new Date();
+  const time = now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  el.textContent = `· Saved ${time}`;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    SERIALIZE PANEL → JSON PAYLOAD
 ═══════════════════════════════════════════════════════════════ */
@@ -1621,6 +1667,7 @@ function savePanel(silent = false) {
     clearInterval(autosaveTimer);
     autosaveTimer = null;
     updateAutosaveDisplay();
+    updateLastSaved();
     if (!silent) showToast('Panel saved to browser storage.');
   } catch(e) {
     if (!silent) alert('Save failed: ' + e.message);
@@ -1682,6 +1729,7 @@ function applyPayload(data) {
 
   changesMade = false;
   updateAutosaveDisplay();
+  updateRemoveRowUI();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2004,6 +2052,7 @@ function showToast(msg) {
   });
 
   updateUndoRedoUI();
+  updateRemoveRowUI();
 })();
 </script>
 </body>
