@@ -924,31 +924,26 @@ body.exporting .no-export { display: none !important; }
   <h3>Print or Export</h3>
 
   <div style="margin-bottom:14px;">
-    <label style="text-transform:uppercase;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text-muted);margin-bottom:8px;display:block;">Layout</label>
+    <label style="text-transform:uppercase;font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--text-muted);margin-bottom:8px;display:block;">Output</label>
     <div style="display:flex;flex-direction:column;gap:6px;" id="print-layout-options">
       <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
-        <input type="radio" name="print-layout" value="fit" checked style="margin-top:2px;accent-color:var(--blue);">
-        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Fit to one page</strong>Scales the entire panel to fill a single sheet — recommended for taping to your panel.</span>
+        <input type="radio" name="print-layout" value="png-portrait" checked style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">📄 Portrait — fit to one page</strong>Exports a full-color PNG sized for a single portrait sheet. Best for taping to your panel.</span>
       </label>
       <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
-        <input type="radio" name="print-layout" value="natural" style="margin-top:2px;accent-color:var(--blue);">
-        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Full size / multi-sheet</strong>Prints at 100% — use if your panel is large and you want to span multiple sheets.</span>
+        <input type="radio" name="print-layout" value="png-landscape" style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">🖼 Landscape — fit to one page</strong>Same as above, rotated. Good for wide panels or larger paper.</span>
       </label>
       <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--text-secondary);">
-        <input type="radio" name="print-layout" value="landscape" style="margin-top:2px;accent-color:var(--blue);">
-        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">Landscape, fit to one page</strong>Rotates to landscape orientation — good for wide panels.</span>
+        <input type="radio" name="print-layout" value="multisheet" style="margin-top:2px;accent-color:var(--blue);">
+        <span><strong style="color:var(--text-primary);display:block;margin-bottom:2px;">🗂 Multi-sheet print</strong>Opens the browser print dialog for large panels that span multiple pages. Enable <em>Background graphics</em> in print settings for color.</span>
       </label>
     </div>
   </div>
 
-  <div style="font-size:11px;color:var(--text-muted);background:var(--bg-card2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin-bottom:16px;line-height:1.5;">
-    💡 After the print dialog opens, set <strong>Margins → None</strong> and enable <strong>Background graphics</strong> in your browser's print settings for best results.
-  </div>
-
   <div class="dialog-btns">
-    <button class="btn" id="print-dialog-png-btn">🖼 Export PNG</button>
     <button class="btn" onclick="document.getElementById('printDialog').close()">Cancel</button>
-    <button class="btn btn-primary" onclick="executePrint()">🖨 Print</button>
+    <button class="btn btn-primary" onclick="executePrint()">Go</button>
   </div>
 </dialog>
 
@@ -1618,105 +1613,129 @@ function clearStorage() {
    PRINT / PNG EXPORT
 ═══════════════════════════════════════════════════════════════ */
 function printPanel() {
-  const wasDark = document.body.classList.contains('dark');
-  const pngBtn = document.getElementById('print-dialog-png-btn');
-  pngBtn.onclick = () => {
-    document.getElementById('printDialog').close();
-    exportPNG(wasDark);
-  };
   document.getElementById('printDialog').showModal();
 }
 
 function executePrint() {
-  const layout = document.querySelector('input[name="print-layout"]:checked')?.value || 'fit';
+  const layout = document.querySelector('input[name="print-layout"]:checked')?.value || 'png-portrait';
   document.getElementById('printDialog').close();
 
-  document.body.classList.remove('print-fit', 'print-natural', 'print-landscape');
-  document.body.classList.add('print-' + layout);
+  const wasDark = document.body.classList.contains('dark');
 
-  let dynStyle = document.getElementById('_print_page_style');
-  if (!dynStyle) {
-    dynStyle = document.createElement('style');
-    dynStyle.id = '_print_page_style';
-    document.head.appendChild(dynStyle);
-  }
+  if (layout === 'png-portrait' || layout === 'png-landscape') {
+    // PNG path: always full color, no browser chrome, forces light mode
+    exportPanelPNG({ landscape: layout === 'png-landscape', wasDark });
+  } else {
+    // Multi-sheet: use browser print dialog
+    document.body.classList.remove('print-fit', 'print-natural', 'print-landscape', 'print-multisheet');
+    document.body.classList.add('print-multisheet');
 
-  // Calculate zoom so the export-container fills the printable page width.
-  // Standard page widths minus 20mm margins (10mm each side):
-  //   Portrait  A4: 210 - 20 = 190mm  ≈ 719px @96dpi  (conservative: use 700px)
-  //   Portrait  Letter: 216 - 20 = 196mm ≈ 741px        (conservative: use 720px)
-  // We use the container's actual rendered width as the source.
-  const container = document.getElementById('export-container');
-  const containerW = container.offsetWidth;
+    let dynStyle = document.getElementById('_print_page_style');
+    if (!dynStyle) {
+      dynStyle = document.createElement('style');
+      dynStyle.id = '_print_page_style';
+      document.head.appendChild(dynStyle);
+    }
+    dynStyle.textContent = '@page { size: portrait; margin: 10mm; }';
 
-  // Target printable width in px at 96dpi — portrait letter is ~720px, landscape ~950px
-  const printableW = layout === 'landscape' ? 950 : 720;
-  const zoom = layout === 'natural' ? 1 : Math.min(1, printableW / containerW);
-  const zoomPct = (zoom * 100).toFixed(2) + '%';
-
-  const pageRule = layout === 'landscape'
-    ? '@page { size: landscape; margin: 10mm; }'
-    : '@page { size: portrait;  margin: 10mm; }';
-
-  dynStyle.textContent = `
-    ${pageRule}
-    :root { --print-zoom: ${zoom}; }
-  `;
-
-  setTimeout(() => {
-    window.print();
     setTimeout(() => {
-      document.body.classList.remove('print-fit', 'print-natural', 'print-landscape');
-      dynStyle.textContent = '';
-    }, 1200);
-  }, 80);
+      window.print();
+      setTimeout(() => {
+        document.body.classList.remove('print-multisheet');
+        dynStyle.textContent = '';
+      }, 1200);
+    }, 80);
+  }
 }
 
-async function exportPNG(wasDark) {
+/* ═══════════════════════════════════════════════════════════════
+   PNG EXPORT — full color, light mode, fits to page size
+═══════════════════════════════════════════════════════════════ */
+async function exportPanelPNG({ landscape = false, wasDark = false } = {}) {
   try {
     // Force light mode for export
     if (wasDark) document.body.classList.remove('dark');
     document.body.classList.add('exporting');
 
     const containerEl = document.getElementById('export-container');
-    const canvas = await html2canvas(containerEl, { scale: 3, backgroundColor: '#ffffff', useCORS: true });
+
+    // Render at high resolution
+    const scale = 3;
+    const canvas = await html2canvas(containerEl, {
+      scale,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+      logging: false
+    });
 
     document.body.classList.remove('exporting');
     if (wasDark) document.body.classList.add('dark');
 
-    // Crop tight + add margin
+    // Tight-crop to content
     const ctx = canvas.getContext('2d');
     const { data: px, width: cw, height: ch } = ctx.getImageData(0, 0, canvas.width, canvas.height);
     let minX = cw, minY = ch, maxX = 0, maxY = 0;
     for (let y = 0; y < ch; y++) {
       for (let x = 0; x < cw; x++) {
-        if (px[(y * cw + x) * 4 + 3] > 0) {
+        const i = (y * cw + x) * 4;
+        if (px[i+3] > 10) {
           if (x < minX) minX = x; if (x > maxX) maxX = x;
           if (y < minY) minY = y; if (y > maxY) maxY = y;
         }
       }
     }
-    const m = 24 * 3;
+
+    const cropW = maxX - minX + 1;
+    const cropH = maxY - minY + 1;
+    const margin = 32 * scale; // ~32px visual margin at 1x
+
+    // Target page dimensions in px @ scale (letter paper @ 150dpi is fine for printing)
+    // Portrait letter printable: ~7.5in wide @ 150dpi = 1125px
+    // Landscape letter printable: ~10in wide @ 150dpi = 1500px
+    const dpi = 150;
+    const targetW = landscape ? Math.round(10 * dpi) : Math.round(7.5 * dpi);
+    const targetH = landscape ? Math.round(7.5 * dpi) : Math.round(10 * dpi);
+
+    // Scale the cropped content to fit inside the target with margins
+    const availW = targetW - margin * 2;
+    const availH = targetH - margin * 2;
+    const scaleX = availW / cropW;
+    const scaleY = availH / cropH;
+    const fitScale = Math.min(scaleX, scaleY, 1); // never upscale
+
+    const drawW = Math.round(cropW * fitScale);
+    const drawH = Math.round(cropH * fitScale);
+
     const out = document.createElement('canvas');
-    out.width  = (maxX - minX + 1) + m * 2;
-    out.height = (maxY - minY + 1) + m * 2;
+    out.width  = targetW;
+    out.height = targetH;
     const octx = out.getContext('2d');
     octx.fillStyle = '#ffffff';
-    octx.fillRect(0, 0, out.width, out.height);
-    octx.drawImage(canvas, minX, minY, maxX - minX + 1, maxY - minY + 1, m, m, maxX - minX + 1, maxY - minY + 1);
+    octx.fillRect(0, 0, targetW, targetH);
 
+    // Center the content
+    const offsetX = Math.round((targetW - drawW) / 2);
+    const offsetY = Math.round((targetH - drawH) / 2);
+    octx.drawImage(canvas, minX, minY, cropW, cropH, offsetX, offsetY, drawW, drawH);
+
+    const suffix = landscape ? '_landscape' : '_portrait';
     const a = document.createElement('a');
     a.href = out.toDataURL('image/png');
-    a.download = 'breaker_panel.png';
+    a.download = 'breaker_panel' + suffix + '.png';
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
-    showToast('PNG exported.');
+    showToast('PNG exported — open it and print at "Actual size" for best results.');
   } catch(err) {
+    if (document.body.classList.contains('dark') !== !wasDark) {
+      if (wasDark) document.body.classList.add('dark');
+      else document.body.classList.remove('dark');
+    }
     document.body.classList.remove('exporting');
-    if (wasDark) document.body.classList.add('dark');
     alert('PNG export failed: ' + err.message);
   }
 }
+
+
 
 /* ═══════════════════════════════════════════════════════════════
    TOAST NOTIFICATION
