@@ -1107,6 +1107,41 @@ body.exporting .no-export { display: none !important; }
   </div>
 </dialog>
 
+<!-- Clear Panel Confirmation Dialog -->
+<dialog id="clearPanelDialog" style="width:420px;max-width:94vw;">
+  <div style="text-align:center;font-size:36px;margin-bottom:8px;">⚠️</div>
+  <h3 style="text-align:center;margin-bottom:12px;">Clear the panel?</h3>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">
+    This will remove <strong style="color:var(--text-primary);">every breaker</strong> from the panel and reset it to the default number of rows. Header and footer information will be kept.
+  </p>
+  <div id="clear-panel-warning" style="
+    display:none;
+    align-items:flex-start;
+    gap:10px;
+    background:var(--accent-dim);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:10px 12px;
+    margin-bottom:12px;
+    font-size:12px;
+    color:var(--text-secondary);
+    line-height:1.5;
+  ">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="var(--accent)" stroke="none"/></svg>
+    <span>You have <strong style="color:var(--text-primary);">unsaved changes</strong> and no exported JSON file. Once cleared, your breaker layout cannot be recovered. Consider exporting a JSON backup first.</span>
+  </div>
+  <div style="background:var(--bg-card2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--text-muted);line-height:1.6;">
+    <strong style="color:var(--text-secondary);display:block;margin-bottom:4px;">This action will:</strong>
+    Remove all breakers · Reset to default row count · Cannot be undone after confirming
+    <span style="display:block;margin-top:6px;color:var(--blue);font-size:11px;">Tip: Undo is available immediately after clearing if you change your mind.</span>
+  </div>
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('clearPanelDialog').close()">Cancel</button>
+    <button class="btn" onclick="document.getElementById('clearPanelDialog').close(); exportJSON();" style="color:var(--blue);border-color:var(--blue);">Export JSON first</button>
+    <button class="btn btn-danger" onclick="document.getElementById('clearPanelDialog').close(); executeClearPanel();">Clear Panel</button>
+  </div>
+</dialog>
+
 <!-- Migration Dialog -->
 <dialog id="migrationDialog">
   <div class="migration-icon">📦</div>
@@ -1542,11 +1577,19 @@ function updateFooterDisplay() {
    CLEAR PANEL
 ═══════════════════════════════════════════════════════════════ */
 function clearPanel() {
-  if (!confirm('Clear all breakers from the panel? This cannot be undone.')) return;
+  // Show unsaved-changes warning if relevant
+  const warning = document.getElementById('clear-panel-warning');
+  if (warning) warning.style.display = changesMade ? 'flex' : 'none';
+  document.getElementById('clearPanelDialog').showModal();
+}
+
+function executeClearPanel() {
   snapshotForUndo();
   panel.querySelectorAll('.slot').forEach(s => s.remove());
   createInitialPanel();
+  updateRemoveRowUI();
   markChanges();
+  showToast('Panel cleared.');
 }
 
 /* ═══════════════════════════════════════════════════════════════
