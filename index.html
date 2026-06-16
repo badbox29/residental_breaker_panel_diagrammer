@@ -30,25 +30,15 @@
   --blue-hover:     #2563eb;
   --blue-dim:       rgba(59,130,246,0.10);
 
-  /* Breaker type — screen colors (light) */
+  /* Breaker type badge colors — screen (light) */
   --type-std-bg:    #00bcd4; --type-std-fg:    #000000;
   --type-gfci-bg:   #4caf50; --type-gfci-fg:   #000000;
   --type-afci-bg:   #9e9e9e; --type-afci-fg:   #ffffff;
   --type-dual-bg:   #e040fb; --type-dual-fg:   #ffffff;
-  --type-cafi-bg:   #ffffff; --type-cafi-fg:   #000000;
+  --type-cafi-bg:   #eeeeee; --type-cafi-fg:   #000000;
   --type-tandem-bg: #ff9800; --type-tandem-fg: #000000;
   --type-surge-bg:  #3b82f6; --type-surge-fg:  #ffffff;
   --type-spare-bg:  #d4d4d4; --type-spare-fg:  #555555;
-
-  /* Slot fill colors (slightly richer than badge, same hue) */
-  --slot-std-bg:    #00acc1;
-  --slot-gfci-bg:   #43a047;
-  --slot-dual-bg:   #d81b60;
-  --slot-afci-bg:   #757575;
-  --slot-cafi-bg:   #e8e8e8;
-  --slot-tandem-bg: #fb8c00;
-  --slot-surge-bg:  #1e88e5;
-  --slot-spare-bg:  #c8c8c8;
 
   /* Panel chrome */
   --panel-bg:       #e4e4e4;
@@ -58,6 +48,10 @@
   --main-bg:        #c0392b;
   --main-fg:        #ffffff;
   --num-color:      #999999;
+
+  /* Breaker card body — neutral, type shown via badge only */
+  --breaker-bg:     #3a3a3a;
+  --breaker-fg:     #f0f0f0;
 }
 
 .dark {
@@ -79,7 +73,7 @@
   --blue-hover:     #60a5fa;
   --blue-dim:       rgba(59,130,246,0.15);
 
-  /* Badges — dim tinted bg + colored text */
+  /* Badges — dim tinted bg + colored text in dark mode */
   --type-std-bg:    rgba(0,188,212,0.18);    --type-std-fg:    #00bcd4;
   --type-gfci-bg:   rgba(76,175,80,0.18);    --type-gfci-fg:   #4caf50;
   --type-afci-bg:   rgba(158,158,158,0.18);  --type-afci-fg:   #aaaaaa;
@@ -89,16 +83,6 @@
   --type-surge-bg:  rgba(59,130,246,0.18);   --type-surge-fg:  #3b82f6;
   --type-spare-bg:  rgba(200,200,200,0.12);  --type-spare-fg:  #888888;
 
-  /* Slot fills — desaturated but still readable */
-  --slot-std-bg:    #006978;
-  --slot-gfci-bg:   #2e6b30;
-  --slot-dual-bg:   #7b1040;
-  --slot-afci-bg:   #4a4a4a;
-  --slot-cafi-bg:   #3a3a3a;
-  --slot-tandem-bg: #8a4e00;
-  --slot-surge-bg:  #1a3f7a;
-  --slot-spare-bg:  #383838;
-
   --panel-bg:       #1e1e1e;
   --panel-border:   #3a3a3a;
   --slot-empty-bg:  #2e2e2e;
@@ -106,6 +90,10 @@
   --main-bg:        #8b1a12;
   --main-fg:        #ffcccc;
   --num-color:      #555555;
+
+  /* Breaker card body — lighter than panel so it reads clearly in dark */
+  --breaker-bg:     #3c3c3c;
+  --breaker-fg:     #e8e8e8;
 }
 
 /* ═══════════════════════════════════════════════
@@ -118,39 +106,63 @@ body {
   background: var(--bg-page);
   color: var(--text-primary);
   min-height: 100vh;
-  padding: 20px 16px 40px;
+  padding: 0 0 40px;
   transition: background .2s, color .2s;
 }
 
 /* ═══════════════════════════════════════════════
-   TOPBAR
+   TOPBAR — always dark regardless of theme
 ═══════════════════════════════════════════════ */
 .topbar {
-  max-width: 900px;
-  margin: 0 auto 20px;
+  background: #111114;
+  border-bottom: 1px solid #2a2a32;
+  padding: 0 24px;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 200;
 }
 .topbar-title {
-  font-size: 20px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: -.02em;
-  color: var(--text-primary);
+  color: #e8e8f0;
   display: flex;
   align-items: center;
   gap: 10px;
 }
 .topbar-title .icon {
-  width: 36px; height: 36px;
-  background: var(--accent-dim);
-  color: var(--accent);
-  border-radius: 8px;
+  width: 32px; height: 32px;
+  background: rgba(192,57,43,0.25);
+  color: #e05a4e;
+  border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  font-size: 16px;
 }
-.topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.topbar-actions { display: flex; gap: 6px; align-items: center; }
+
+/* Theme toggle — always dark-mode styled regardless of page theme */
+#theme-toggle {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #c0c0d0;
+  border-radius: 7px;
+  padding: 6px 9px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background .15s;
+  line-height: 1;
+}
+#theme-toggle:hover { background: rgba(255,255,255,0.13); }
+
+/* Page content wrapper — padding below sticky topbar */
+.page-content {
+  padding: 20px 16px 0;
+}
 
 /* ═══════════════════════════════════════════════
    BUTTONS
@@ -363,12 +375,12 @@ body {
 .slot-number.left  { left: -36px; text-align: right; }
 .slot-number.right { right: -36px; text-align: left; }
 
-/* Breaker card inside slot */
+/* Breaker card inside slot — neutral always, type shown only via badge */
 .breaker {
   position: absolute;
   inset: 0;
-  background: #444;
-  color: #fff;
+  background: var(--breaker-bg);
+  color: var(--breaker-fg);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -389,11 +401,11 @@ body {
 .breaker-amps {
   font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  opacity: .85;
+  opacity: .75;
   margin-top: 1px;
 }
 
-/* Type badge */
+/* Type badge — this is where all the color lives */
 .type-badge {
   position: absolute;
   bottom: 4px;
@@ -407,7 +419,7 @@ body {
   text-transform: uppercase;
 }
 
-/* Badge + slot fill colors by type */
+/* Badge colors by type */
 .type-Standard .type-badge { background: var(--type-std-bg);    color: var(--type-std-fg); }
 .type-GFCI     .type-badge { background: var(--type-gfci-bg);   color: var(--type-gfci-fg); }
 .type-AFCI     .type-badge { background: var(--type-afci-bg);   color: var(--type-afci-fg); }
@@ -417,18 +429,9 @@ body {
 .type-Surge    .type-badge { background: var(--type-surge-bg);  color: var(--type-surge-fg); }
 .type-Spare    .type-badge { background: var(--type-spare-bg);  color: var(--type-spare-fg); }
 
-.breaker.type-Standard { background: var(--slot-std-bg);    color: #fff; }
-.breaker.type-GFCI     { background: var(--slot-gfci-bg);   color: #fff; }
-.breaker.type-AFCI     { background: var(--slot-afci-bg);   color: #fff; }
-.breaker.type-Dual     { background: var(--slot-dual-bg);   color: #fff; }
-.breaker.type-CAFI     { background: var(--slot-cafi-bg);   color: #333; }
-.breaker.type-Tandem   { background: var(--slot-tandem-bg); color: #fff; }
-.breaker.type-Surge    { background: var(--slot-surge-bg);  color: #fff; }
-.breaker.type-Spare    { background: var(--slot-spare-bg);  color: var(--text-secondary); }
-
 /* 2-pole subordinate */
 .breaker.subordinate {
-  opacity: .65;
+  opacity: .6;
   pointer-events: none;
 }
 
@@ -626,19 +629,14 @@ body.exporting .no-export { display: none !important; }
     --type-gfci-bg:   #4caf50; --type-gfci-fg:   #000000;
     --type-afci-bg:   #9e9e9e; --type-afci-fg:   #ffffff;
     --type-dual-bg:   #e040fb; --type-dual-fg:   #ffffff;
-    --type-cafi-bg:   #ffffff; --type-cafi-fg:   #000000;
+    --type-cafi-bg:   #eeeeee; --type-cafi-fg:   #000000;
     --type-tandem-bg: #ff9800; --type-tandem-fg: #000000;
     --type-surge-bg:  #3b82f6; --type-surge-fg:  #ffffff;
     --type-spare-bg:  #d4d4d4; --type-spare-fg:  #555555;
 
-    --slot-std-bg:    #00acc1;
-    --slot-gfci-bg:   #43a047;
-    --slot-dual-bg:   #d81b60;
-    --slot-afci-bg:   #757575;
-    --slot-cafi-bg:   #e8e8e8;
-    --slot-tandem-bg: #fb8c00;
-    --slot-surge-bg:  #1e88e5;
-    --slot-spare-bg:  #c8c8c8;
+    /* Breaker card — light/neutral for print */
+    --breaker-bg:     #444444;
+    --breaker-fg:     #ffffff;
 
     background: #fff !important;
     color: #111 !important;
@@ -654,8 +652,6 @@ body.exporting .no-export { display: none !important; }
     padding: 12px;
     max-width: 100%;
   }
-
-  .breaker.type-CAFI { color: #111 !important; }
 }
 </style>
 </head>
@@ -670,9 +666,11 @@ body.exporting .no-export { display: none !important; }
     Breaker Panel Editor
   </div>
   <div class="topbar-actions">
-    <button class="btn btn-icon no-export" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+    <button id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
   </div>
 </div>
+
+<div class="page-content">
 
 <!-- ═══════════════════════════════════════════
      TOOLBAR
@@ -755,6 +753,8 @@ body.exporting .no-export { display: none !important; }
 <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" class="no-print">
   © 2026 badbox29 · MIT License · v2.0
 </div>
+
+</div><!-- /page-content -->
 
 <!-- ═══════════════════════════════════════════
      DIALOGS
