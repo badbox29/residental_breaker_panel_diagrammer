@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breaker Panel Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — LIGHT (default) & DARK
+═══════════════════════════════════════════════ */
+:root {
+  /* Neutrals */
+  --bg-page:        #f2f2f2;
+  --bg-card:        #ffffff;
+  --bg-card2:       #f7f7f7;
+  --bg-input:       #ebebeb;
+  --border:         #d4d4d4;
+  --border-light:   #bbbbbb;
+  --text-primary:   #111111;
+  --text-secondary: #555555;
+  --text-muted:     #888888;
+  --shadow:         0 6px 24px rgba(0,0,0,.07);
+
+  /* Accent */
+  --accent:         #c0392b;
+  --accent-hover:   #a93226;
+  --accent-dim:     rgba(192,57,43,0.10);
+  --blue:           #3b82f6;
+  --blue-hover:     #2563eb;
+  --blue-dim:       rgba(59,130,246,0.10);
+
+  /* Breaker type — screen colors (light) */
+  --type-std-bg:    #00bcd4; --type-std-fg:    #000000;
+  --type-gfci-bg:   #4caf50; --type-gfci-fg:   #000000;
+  --type-afci-bg:   #9e9e9e; --type-afci-fg:   #ffffff;
+  --type-dual-bg:   #e040fb; --type-dual-fg:   #ffffff;
+  --type-cafi-bg:   #ffffff; --type-cafi-fg:   #000000;
+  --type-tandem-bg: #ff9800; --type-tandem-fg: #000000;
+  --type-surge-bg:  #3b82f6; --type-surge-fg:  #ffffff;
+  --type-spare-bg:  #d4d4d4; --type-spare-fg:  #555555;
+
+  /* Slot fill colors (slightly richer than badge, same hue) */
+  --slot-std-bg:    #00acc1;
+  --slot-gfci-bg:   #43a047;
+  --slot-dual-bg:   #d81b60;
+  --slot-afci-bg:   #757575;
+  --slot-cafi-bg:   #e8e8e8;
+  --slot-tandem-bg: #fb8c00;
+  --slot-surge-bg:  #1e88e5;
+  --slot-spare-bg:  #c8c8c8;
+
+  /* Panel chrome */
+  --panel-bg:       #e4e4e4;
+  --panel-border:   #bbbbbb;
+  --slot-empty-bg:  #cccccc;
+  --slot-empty-bd:  #aaaaaa;
+  --main-bg:        #c0392b;
+  --main-fg:        #ffffff;
+  --num-color:      #999999;
+}
+
+.dark {
+  --bg-page:        #1c1c1c;
+  --bg-card:        #252525;
+  --bg-card2:       #2e2e2e;
+  --bg-input:       #1a1a1a;
+  --border:         #3a3a3a;
+  --border-light:   #4a4a4a;
+  --text-primary:   #e8e8e8;
+  --text-secondary: #909090;
+  --text-muted:     #585858;
+  --shadow:         0 6px 24px rgba(0,0,0,.35);
+
+  --accent:         #c0392b;
+  --accent-hover:   #e74c3c;
+  --accent-dim:     rgba(192,57,43,0.18);
+  --blue:           #3b82f6;
+  --blue-hover:     #60a5fa;
+  --blue-dim:       rgba(59,130,246,0.15);
+
+  /* Badges — dim tinted bg + colored text */
+  --type-std-bg:    rgba(0,188,212,0.18);    --type-std-fg:    #00bcd4;
+  --type-gfci-bg:   rgba(76,175,80,0.18);    --type-gfci-fg:   #4caf50;
+  --type-afci-bg:   rgba(158,158,158,0.18);  --type-afci-fg:   #aaaaaa;
+  --type-dual-bg:   rgba(224,64,251,0.18);   --type-dual-fg:   #e040fb;
+  --type-cafi-bg:   rgba(255,255,255,0.10);  --type-cafi-fg:   #cccccc;
+  --type-tandem-bg: rgba(255,152,0,0.18);    --type-tandem-fg: #ff9800;
+  --type-surge-bg:  rgba(59,130,246,0.18);   --type-surge-fg:  #3b82f6;
+  --type-spare-bg:  rgba(200,200,200,0.12);  --type-spare-fg:  #888888;
+
+  /* Slot fills — desaturated but still readable */
+  --slot-std-bg:    #006978;
+  --slot-gfci-bg:   #2e6b30;
+  --slot-dual-bg:   #7b1040;
+  --slot-afci-bg:   #4a4a4a;
+  --slot-cafi-bg:   #3a3a3a;
+  --slot-tandem-bg: #8a4e00;
+  --slot-surge-bg:  #1a3f7a;
+  --slot-spare-bg:  #383838;
+
+  --panel-bg:       #1e1e1e;
+  --panel-border:   #3a3a3a;
+  --slot-empty-bg:  #2e2e2e;
+  --slot-empty-bd:  #444444;
+  --main-bg:        #8b1a12;
+  --main-fg:        #ffcccc;
+  --num-color:      #555555;
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding: 20px 16px 40px;
+  transition: background .2s, color .2s;
+}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR
+═══════════════════════════════════════════════ */
+.topbar {
+  max-width: 900px;
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.topbar-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-title .icon {
+  width: 36px; height: 36px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.topbar-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 13px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--bg-card2); color: var(--text-primary); border-color: var(--border-light); }
+
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+  border-color: transparent;
+}
+.btn-primary:hover { background: var(--blue-hover); color: #fff; }
+
+.btn-danger {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: transparent;
+}
+.btn-danger:hover { background: var(--accent); color: #fff; }
+
+.btn-icon {
+  padding: 7px 9px;
+  font-size: 15px;
+}
+
+/* ═══════════════════════════════════════════════
+   TOOLBAR
+═══════════════════════════════════════════════ */
+.toolbar {
+  max-width: 900px;
+  margin: 0 auto 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.toolbar-sep {
+  width: 1px; height: 24px;
+  background: var(--border);
+  margin: 0 2px;
+}
+#autosave-status {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════
+   EXPORT CONTAINER (wraps everything that prints)
+═══════════════════════════════════════════════ */
+#export-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 22px 26px 26px;
+  transition: background .2s, border-color .2s;
+}
+
+/* ═══════════════════════════════════════════════
+   HEADER / FOOTER INFO BLOCKS
+═══════════════════════════════════════════════ */
+.info-block {
+  display: grid;
+  gap: 6px 16px;
+}
+.info-header {
+  grid-template-columns: 1fr auto;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.info-footer {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.info-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -.01em;
+  grid-column: 1;
+}
+.info-edit-btn { grid-column: 2; grid-row: 1; align-self: start; }
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 20px;
+  font-size: 13px;
+  grid-column: 1 / -1;
+}
+.info-row.full { grid-template-columns: 1fr; }
+
+.info-cell {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  line-height: 1.4;
+  flex-wrap: wrap;
+}
+.info-cell strong {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+}
+.info-cell span {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL GRID
+═══════════════════════════════════════════════ */
+#panel-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 10px 0;
+}
+
+#panel {
+  display: grid;
+  grid-template-columns: repeat(2, 190px);
+  grid-auto-rows: 64px;
+  gap: 4px 28px;
+  background: var(--panel-bg);
+  padding: 18px 52px;
+  border: 2px solid var(--panel-border);
+  border-radius: 12px;
+  position: relative;
+  transition: background .2s, border-color .2s;
+}
+
+/* Main breaker */
+.main-breaker-slot {
+  grid-column: 1 / span 2;
+  height: 58px;
+  background: var(--main-bg);
+  color: var(--main-fg);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  user-select: none;
+  transition: background .2s;
+  letter-spacing: -.01em;
+}
+.main-breaker-slot:hover { filter: brightness(1.1); }
+.main-amps-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  font-weight: 500;
+  opacity: .9;
+}
+
+/* Slots */
+.slot {
+  background: var(--slot-empty-bg);
+  border: 1px dashed var(--slot-empty-bd);
+  border-radius: 6px;
+  position: relative;
+  cursor: pointer;
+  overflow: visible;
+  transition: background .15s, border-color .15s;
+}
+.slot:hover { border-style: solid; border-color: var(--border-light); }
+
+.slot-number {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--num-color);
+  user-select: none;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+.slot-number.left  { left: -36px; text-align: right; }
+.slot-number.right { right: -36px; text-align: left; }
+
+/* Breaker card inside slot */
+.breaker {
+  position: absolute;
+  inset: 0;
+  background: #444;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  font-size: 12px;
+  border-radius: 6px;
+  padding: 5px 7px 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.breaker-label {
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.breaker-amps {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  opacity: .85;
+  margin-top: 1px;
+}
+
+/* Type badge */
+.type-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: .03em;
+  user-select: none;
+  text-transform: uppercase;
+}
+
+/* Badge + slot fill colors by type */
+.type-Standard .type-badge { background: var(--type-std-bg);    color: var(--type-std-fg); }
+.type-GFCI     .type-badge { background: var(--type-gfci-bg);   color: var(--type-gfci-fg); }
+.type-AFCI     .type-badge { background: var(--type-afci-bg);   color: var(--type-afci-fg); }
+.type-Dual     .type-badge { background: var(--type-dual-bg);   color: var(--type-dual-fg); }
+.type-CAFI     .type-badge { background: var(--type-cafi-bg);   color: var(--type-cafi-fg); }
+.type-Tandem   .type-badge { background: var(--type-tandem-bg); color: var(--type-tandem-fg); }
+.type-Surge    .type-badge { background: var(--type-surge-bg);  color: var(--type-surge-fg); }
+.type-Spare    .type-badge { background: var(--type-spare-bg);  color: var(--type-spare-fg); }
+
+.breaker.type-Standard { background: var(--slot-std-bg);    color: #fff; }
+.breaker.type-GFCI     { background: var(--slot-gfci-bg);   color: #fff; }
+.breaker.type-AFCI     { background: var(--slot-afci-bg);   color: #fff; }
+.breaker.type-Dual     { background: var(--slot-dual-bg);   color: #fff; }
+.breaker.type-CAFI     { background: var(--slot-cafi-bg);   color: #333; }
+.breaker.type-Tandem   { background: var(--slot-tandem-bg); color: #fff; }
+.breaker.type-Surge    { background: var(--slot-surge-bg);  color: #fff; }
+.breaker.type-Spare    { background: var(--slot-spare-bg);  color: var(--text-secondary); }
+
+/* 2-pole subordinate */
+.breaker.subordinate {
+  opacity: .65;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════
+   LEGEND
+═══════════════════════════════════════════════ */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  align-items: center;
+}
+.legend-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+}
+.legend-swatch {
+  width: 22px; height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+/* Legend swatches use same token vars as badges */
+.ls-Standard { background: var(--type-std-bg);    color: var(--type-std-fg); }
+.ls-GFCI     { background: var(--type-gfci-bg);   color: var(--type-gfci-fg); }
+.ls-AFCI     { background: var(--type-afci-bg);   color: var(--type-afci-fg); }
+.ls-Dual     { background: var(--type-dual-bg);   color: var(--type-dual-fg); }
+.ls-CAFI     { background: var(--type-cafi-bg);   color: var(--type-cafi-fg); }
+.ls-Tandem   { background: var(--type-tandem-bg); color: var(--type-tandem-fg); }
+.ls-Surge    { background: var(--type-surge-bg);  color: var(--type-surge-fg); }
+.ls-Spare    { background: var(--type-spare-bg);  color: var(--type-spare-fg); }
+
+/* ═══════════════════════════════════════════════
+   DIALOGS
+═══════════════════════════════════════════════ */
+dialog {
+  border: none;
+  border-radius: 12px;
+  padding: 22px 24px;
+  width: 340px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: 0 16px 48px rgba(0,0,0,.2);
+}
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -.01em;
+}
+dialog label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+dialog input[type="text"],
+dialog input[type="number"],
+dialog input[type="date"],
+dialog select,
+dialog textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+  font-family: 'DM Sans', sans-serif;
+}
+dialog input:focus,
+dialog select:focus,
+dialog textarea:focus { border-color: var(--blue); }
+dialog textarea { min-height: 70px; resize: vertical; }
+dialog select { cursor: pointer; }
+dialog .dialog-btns {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* ═══════════════════════════════════════════════
+   HIDE EDIT CHROME DURING EXPORT & PRINT
+═══════════════════════════════════════════════ */
+body.exporting .no-export { display: none !important; }
+
+/* ═══════════════════════════════════════════════
+   PRINT STYLES
+═══════════════════════════════════════════════ */
+@media print {
+  /* Force light mode regardless of current theme */
+  body, body.dark, html {
+    --bg-page:        #ffffff;
+    --bg-card:        #ffffff;
+    --bg-card2:       #f7f7f7;
+    --bg-input:       #ebebeb;
+    --border:         #cccccc;
+    --border-light:   #bbbbbb;
+    --text-primary:   #111111;
+    --text-secondary: #555555;
+    --text-muted:     #888888;
+    --shadow:         none;
+    --panel-bg:       #e4e4e4;
+    --panel-border:   #bbbbbb;
+    --slot-empty-bg:  #cccccc;
+    --slot-empty-bd:  #aaaaaa;
+    --main-bg:        #c0392b;
+    --main-fg:        #ffffff;
+    --num-color:      #999999;
+
+    /* Full saturated badge colors for print */
+    --type-std-bg:    #00bcd4; --type-std-fg:    #000000;
+    --type-gfci-bg:   #4caf50; --type-gfci-fg:   #000000;
+    --type-afci-bg:   #9e9e9e; --type-afci-fg:   #ffffff;
+    --type-dual-bg:   #e040fb; --type-dual-fg:   #ffffff;
+    --type-cafi-bg:   #ffffff; --type-cafi-fg:   #000000;
+    --type-tandem-bg: #ff9800; --type-tandem-fg: #000000;
+    --type-surge-bg:  #3b82f6; --type-surge-fg:  #ffffff;
+    --type-spare-bg:  #d4d4d4; --type-spare-fg:  #555555;
+
+    --slot-std-bg:    #00acc1;
+    --slot-gfci-bg:   #43a047;
+    --slot-dual-bg:   #d81b60;
+    --slot-afci-bg:   #757575;
+    --slot-cafi-bg:   #e8e8e8;
+    --slot-tandem-bg: #fb8c00;
+    --slot-surge-bg:  #1e88e5;
+    --slot-spare-bg:  #c8c8c8;
+
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body { padding: 0; }
+  .topbar, .toolbar, #autosave-status, .no-export, .no-print { display: none !important; }
+
+  #export-container {
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .breaker.type-CAFI { color: #111 !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     TOPBAR
+════════════════════════════════════════════ -->
+<div class="topbar">
+  <div class="topbar-title">
+    <div class="icon">⚡</div>
+    Breaker Panel Editor
+  </div>
+  <div class="topbar-actions">
+    <button class="btn btn-icon no-export" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     TOOLBAR
+════════════════════════════════════════════ -->
+<div class="toolbar no-export">
+  <button class="btn" onclick="addRow()">➕ Add Row</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-primary" onclick="savePanel()">💾 Save to Browser</button>
+  <button class="btn" onclick="loadFromStorage()">📂 Load Saved</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn" onclick="exportJSON()">⬇ Export JSON</button>
+  <button class="btn" onclick="importJSON()">⬆ Import JSON</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn" onclick="printPanel()">🖨 Print / Save PNG</button>
+  <div class="toolbar-sep"></div>
+  <button class="btn btn-danger" onclick="clearPanel()">🧹 Clear Panel</button>
+  <button class="btn btn-danger" onclick="clearStorage()">🗑 Delete Saved</button>
+  <span id="autosave-status">No changes pending.</span>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     EXPORT CONTAINER — everything below
+     this line is included in print/PNG
+════════════════════════════════════════════ -->
+<div id="export-container">
+
+  <!-- HEADER -->
+  <section class="info-block info-header" id="headerBlock">
+    <div class="info-title">Panel Information</div>
+    <button class="btn btn-icon info-edit-btn no-export" onclick="openDialog('headerDialog')" title="Edit header">✏️</button>
+    <div class="info-row">
+      <div class="info-cell"><strong>Address</strong><span id="hdr-address">—</span></div>
+      <div class="info-cell"><strong>Install Date</strong><span id="hdr-date">—</span></div>
+    </div>
+    <div class="info-row full">
+      <div class="info-cell"><strong>Location</strong><span id="hdr-location">—</span></div>
+    </div>
+  </section>
+
+  <!-- PANEL GRID -->
+  <div id="panel-container">
+    <div id="panel">
+      <div class="main-breaker-slot" id="main-breaker" onclick="openDialog('mainDialog')" title="Click to edit main disconnect">
+        <span>Main Disconnect</span>
+        <span class="main-amps-display" id="main-amps">200A</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <section class="info-block info-footer" id="footerBlock">
+    <div class="info-row">
+      <div class="info-cell"><strong>Manufacturer</strong><span id="ftr-mfr">—</span></div>
+      <div class="info-cell"><strong>Model</strong><span id="ftr-model">—</span></div>
+    </div>
+    <div class="info-row">
+      <div class="info-cell"><strong>Panel Rating</strong><span id="ftr-rating">—</span></div>
+      <div class="info-cell"><strong>Voltage</strong><span id="ftr-voltage">—</span></div>
+    </div>
+    <div class="info-row">
+      <div class="info-cell"><strong>Installed By</strong><span id="ftr-installer">—</span></div>
+      <div class="info-cell"></div>
+    </div>
+    <div class="info-row full">
+      <div class="info-cell"><strong>Notes</strong><span id="ftr-notes">—</span></div>
+    </div>
+    <div style="margin-top:8px;" class="no-export">
+      <button class="btn btn-icon" onclick="openDialog('footerDialog')" title="Edit footer">✏️ Edit Footer</button>
+    </div>
+
+    <!-- LEGEND -->
+    <div class="legend" id="legend">
+      <span class="legend-label">Legend</span>
+      <!-- populated by JS -->
+    </div>
+  </section>
+
+</div><!-- /export-container -->
+
+<div style="text-align:center;margin-top:18px;font-size:11px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;" class="no-print">
+  © 2026 badbox29 · MIT License · v2.0
+</div>
+
+<!-- ═══════════════════════════════════════════
+     DIALOGS
+════════════════════════════════════════════ -->
+
+<!-- Breaker Config -->
+<dialog id="breakerDialog">
+  <h3 id="breaker-dialog-title">Configure Breaker</h3>
+  <label>Label</label>
+  <input type="text" id="br-label" placeholder="Kitchen Outlets" autocomplete="off">
+  <label>Amperage</label>
+  <input type="number" id="br-amps" min="15" step="5" value="15">
+  <label>Type</label>
+  <select id="br-type">
+    <option value="Standard">Standard</option>
+    <option value="GFCI">GFCI</option>
+    <option value="AFCI">AFCI</option>
+    <option value="Dual">Dual (GFCI+AFCI)</option>
+    <option value="CAFI">CAFI</option>
+    <option value="Tandem">Tandem</option>
+    <option value="Surge">Surge</option>
+    <option value="Spare">Spare</option>
+  </select>
+  <label>Poles</label>
+  <select id="br-poles">
+    <option value="1">1-Pole</option>
+    <option value="2">2-Pole</option>
+  </select>
+  <div class="dialog-btns">
+    <button class="btn btn-danger" id="br-delete-btn" onclick="deleteBreaker()">Delete</button>
+    <button class="btn" onclick="closeBreakerDialog()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveBreakerDialog()">Save</button>
+  </div>
+</dialog>
+
+<!-- Main Disconnect -->
+<dialog id="mainDialog">
+  <h3>Main Disconnect</h3>
+  <label>Amperage</label>
+  <input type="number" id="main-amps-input" value="200" min="60" step="10">
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('mainDialog').close()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveMainDialog()">Save</button>
+  </div>
+</dialog>
+
+<!-- Header -->
+<dialog id="headerDialog">
+  <h3>Edit Header</h3>
+  <label>Address</label>
+  <input type="text" id="hdr-address-in" placeholder="123 Main St, City, ST 00000">
+  <label>Install Date</label>
+  <input type="date" id="hdr-date-in">
+  <label>Location</label>
+  <input type="text" id="hdr-location-in" placeholder="Garage / Basement / Outdoor">
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('headerDialog').close()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveHeaderDialog()">Save</button>
+  </div>
+</dialog>
+
+<!-- Footer -->
+<dialog id="footerDialog">
+  <h3>Edit Footer</h3>
+  <label>Manufacturer</label>
+  <input type="text" id="ftr-mfr-in" placeholder="Square D">
+  <label>Model</label>
+  <input type="text" id="ftr-model-in" placeholder="QO130L200PG">
+  <label>Panel Rating</label>
+  <input type="text" id="ftr-rating-in" placeholder="200A">
+  <label>Voltage</label>
+  <input type="text" id="ftr-voltage-in" placeholder="120/240V">
+  <label>Installed By</label>
+  <input type="text" id="ftr-installer-in" placeholder="ABC Electric">
+  <label>Notes</label>
+  <textarea id="ftr-notes-in" placeholder="Outdoor rated, GFCI at feeder…"></textarea>
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('footerDialog').close()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveFooterDialog()">Save</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════════════ */
+const NUM_INITIAL_ROWS = 10;
+const STORAGE_KEY = 'breakerPanelData_v2';
+const THEME_KEY   = 'breakerPanelTheme';
+
+const headerState = { address: '', installDate: '', location: '' };
+const footerState = { manufacturer: '', model: '', rating: '', voltage: '', installer: '', notes: '' };
+
+let selectedSlotIndex = null;
+let changesMade = false;
+let autosaveTimer = null;
+let autosaveSecondsLeft = 30;
+let pairCounter = 0; // for generating unique pair IDs
+
+const panel = document.getElementById('panel');
+
+/* ═══════════════════════════════════════════════════════════════
+   LEGEND
+═══════════════════════════════════════════════════════════════ */
+const BREAKER_TYPES = [
+  { key: 'Standard', label: 'Standard',        abbr: 'STD'  },
+  { key: 'GFCI',     label: 'GFCI',            abbr: 'GFCI' },
+  { key: 'AFCI',     label: 'AFCI',            abbr: 'AFCI' },
+  { key: 'Dual',     label: 'Dual (GFCI+AFCI)',abbr: 'DUAL' },
+  { key: 'CAFI',     label: 'CAFI',            abbr: 'CAFI' },
+  { key: 'Tandem',   label: 'Tandem',          abbr: 'TAND' },
+  { key: 'Surge',    label: 'Surge Protection',abbr: 'SURGE'},
+  { key: 'Spare',    label: 'Spare',           abbr: 'SPARE'},
+];
+
+function buildLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '<span class="legend-label">Legend</span>';
+  BREAKER_TYPES.forEach(t => {
+    const item = document.createElement('div');
+    item.className = 'legend-item';
+    item.innerHTML = `<div class="legend-swatch ls-${t.key}">${t.abbr}</div><span>${t.label}</span>`;
+    el.appendChild(item);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME
+═══════════════════════════════════════════════════════════════ */
+function applyTheme(theme) {
+  document.body.classList.toggle('dark', theme === 'dark');
+  document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const isDark = document.body.classList.contains('dark');
+  const next = isDark ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PANEL CREATION
+═══════════════════════════════════════════════════════════════ */
+function createInitialPanel(rows = NUM_INITIAL_ROWS) {
+  // Remove any existing slots (keep main breaker)
+  panel.querySelectorAll('.slot').forEach(s => s.remove());
+  for (let i = 0; i < rows * 2; i++) {
+    addSlotElement(i);
+  }
+}
+
+function addSlotElement(index) {
+  const slot = document.createElement('div');
+  slot.className = 'slot';
+  slot.dataset.index = index;
+  renderSlotNumber(slot, index);
+  slot.addEventListener('click', () => openBreakerDialog(index));
+  panel.appendChild(slot);
+  return slot;
+}
+
+function renderSlotNumber(slot, index) {
+  // Remove old number if any
+  const old = slot.querySelector('.slot-number');
+  if (old) old.remove();
+
+  const isLeft = (index % 2 === 0);
+  const num = index + 1;
+  const el = document.createElement('div');
+  el.className = 'slot-number ' + (isLeft ? 'left' : 'right');
+  el.textContent = num;
+  slot.appendChild(el);
+}
+
+function addRow() {
+  const slots = panel.querySelectorAll('.slot');
+  const nextIndex = slots.length;
+  addSlotElement(nextIndex);
+  addSlotElement(nextIndex + 1);
+  markChanges();
+}
+
+function getSlotEl(index) {
+  return panel.querySelector(`.slot[data-index="${index}"]`);
+}
+
+function getNextSlotEl(index) {
+  // Next slot in the SAME column-pair; panel is 2-col so next physical is index+2
+  // But 2-pole spans the same column, next row: index+2 for same side
+  return getSlotEl(index + 2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BREAKER TYPE HELPERS
+═══════════════════════════════════════════════════════════════ */
+function typeToAbbr(type) {
+  const map = { Standard:'STD', GFCI:'GFCI', AFCI:'AFCI', Dual:'DUAL', CAFI:'CAFI', Tandem:'TAND', Surge:'SURGE', Spare:'SPARE' };
+  return map[type] || type.toUpperCase();
+}
+
+function abbrToType(abbr) {
+  const map = { STD:'Standard', GFCI:'GFCI', AFCI:'AFCI', DUAL:'Dual', CAFI:'CAFI', TAND:'Tandem', TANDEM:'Tandem', SURGE:'Surge', SPARE:'Spare' };
+  return map[abbr.toUpperCase()] || 'Standard';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER BREAKER INTO SLOT
+═══════════════════════════════════════════════════════════════ */
+function renderBreaker(slot, { label, amps, type, pairId, isSubordinate = false }) {
+  // Clear existing breaker
+  const existing = slot.querySelector('.breaker');
+  if (existing) existing.remove();
+
+  const br = document.createElement('div');
+  br.className = `breaker type-${type}${isSubordinate ? ' subordinate' : ''}`;
+  br.dataset.pairId = pairId || '';
+
+  const labelEl = document.createElement('div');
+  labelEl.className = 'breaker-label';
+  labelEl.textContent = label;
+
+  const ampsEl = document.createElement('div');
+  ampsEl.className = 'breaker-amps';
+  ampsEl.textContent = amps + 'A';
+
+  const badge = document.createElement('div');
+  badge.className = 'type-badge';
+  badge.textContent = typeToAbbr(type);
+
+  br.appendChild(labelEl);
+  if (type !== 'Spare') br.appendChild(ampsEl);
+  br.appendChild(badge);
+  slot.appendChild(br);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BREAKER DIALOG — OPEN
+═══════════════════════════════════════════════════════════════ */
+function openBreakerDialog(index) {
+  selectedSlotIndex = index;
+  const slot = getSlotEl(index);
+  const existing = slot.querySelector('.breaker');
+  const isNew = !existing || existing.classList.contains('subordinate');
+
+  // Subordinate slots aren't directly editable — click the primary instead
+  if (existing && existing.classList.contains('subordinate')) {
+    // Walk back to find the primary (same pairId, non-subordinate)
+    const pairId = existing.dataset.pairId;
+    const primary = panel.querySelector(`.breaker[data-pair-id="${pairId}"]:not(.subordinate)`);
+    if (primary) {
+      const primarySlot = primary.closest('.slot');
+      if (primarySlot) openBreakerDialog(parseInt(primarySlot.dataset.index));
+    }
+    return;
+  }
+
+  document.getElementById('breaker-dialog-title').textContent = existing ? 'Edit Breaker' : 'Add Breaker';
+  document.getElementById('br-delete-btn').style.display = existing ? 'inline-flex' : 'none';
+
+  if (existing) {
+    document.getElementById('br-label').value = existing.querySelector('.breaker-label').textContent;
+    const ampsEl = existing.querySelector('.breaker-amps');
+    document.getElementById('br-amps').value = ampsEl ? parseInt(ampsEl.textContent) : 15;
+    document.getElementById('br-type').value = existing.classList[1]?.replace('type-', '') || 'Standard';
+    // Detect poles by pairId
+    const pairId = existing.dataset.pairId;
+    let isPole2 = false;
+    if (pairId) {
+      const subs = panel.querySelectorAll(`.breaker[data-pair-id="${pairId}"].subordinate`);
+      isPole2 = subs.length > 0;
+    }
+    document.getElementById('br-poles').value = isPole2 ? '2' : '1';
+  } else {
+    document.getElementById('br-label').value = '';
+    document.getElementById('br-amps').value = 20;
+    document.getElementById('br-type').value = 'Standard';
+    document.getElementById('br-poles').value = '1';
+  }
+
+  document.getElementById('breakerDialog').showModal();
+  setTimeout(() => document.getElementById('br-label').focus(), 50);
+}
+
+function closeBreakerDialog() {
+  document.getElementById('breakerDialog').close();
+  selectedSlotIndex = null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BREAKER DIALOG — SAVE
+═══════════════════════════════════════════════════════════════ */
+function saveBreakerDialog() {
+  const label = document.getElementById('br-label').value.trim();
+  const type  = document.getElementById('br-type').value;
+
+  if (type !== 'Spare' && !label) {
+    document.getElementById('br-label').focus();
+    return;
+  }
+
+  const amps  = parseInt(document.getElementById('br-amps').value) || 15;
+  const poles = parseInt(document.getElementById('br-poles').value);
+  const index = selectedSlotIndex;
+  const slot  = getSlotEl(index);
+
+  // Get or create pairId
+  const existing = slot.querySelector('.breaker');
+  let pairId = existing?.dataset.pairId || null;
+
+  // Clean up old 2-pole subordinate if switching to 1-pole
+  if (pairId) {
+    const oldSub = panel.querySelector(`.breaker[data-pair-id="${pairId}"].subordinate`);
+    if (oldSub && poles === 1) {
+      const subSlot = oldSub.closest('.slot');
+      oldSub.remove();
+      subSlot.style.pointerEvents = '';
+      subSlot.onclick = null;
+      subSlot.addEventListener('click', () => openBreakerDialog(parseInt(subSlot.dataset.index)));
+    }
+  }
+
+  // For 2-pole, assign a new pairId if needed
+  if (poles === 2) {
+    pairId = pairId || ('pair-' + (++pairCounter));
+    const nextSlot = getNextSlotEl(index);
+    if (!nextSlot) {
+      alert('Cannot place a 2-pole breaker at the bottom of the panel — add a row first.');
+      return;
+    }
+    const nextBreaker = nextSlot.querySelector('.breaker');
+    if (nextBreaker && !nextBreaker.classList.contains('subordinate')) {
+      if (!confirm('The next slot is occupied. Replace it?')) return;
+    }
+    // Render primary
+    renderBreaker(slot, { label: type === 'Spare' ? 'Spare' : label, amps, type, pairId });
+    // Render subordinate
+    nextSlot.querySelectorAll('.breaker').forEach(b => b.remove());
+    renderBreaker(nextSlot, { label: type === 'Spare' ? 'Spare' : label, amps, type, pairId, isSubordinate: true });
+    nextSlot.style.pointerEvents = 'none';
+  } else {
+    pairId = null;
+    renderBreaker(slot, { label: type === 'Spare' ? 'Spare' : label, amps, type, pairId: '' });
+  }
+
+  closeBreakerDialog();
+  markChanges();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DELETE BREAKER
+═══════════════════════════════════════════════════════════════ */
+function deleteBreaker() {
+  const slot = getSlotEl(selectedSlotIndex);
+  const br = slot?.querySelector('.breaker');
+  if (!br) { closeBreakerDialog(); return; }
+
+  const pairId = br.dataset.pairId;
+  if (pairId) {
+    // Remove both halves
+    panel.querySelectorAll(`.breaker[data-pair-id="${pairId}"]`).forEach(b => {
+      const s = b.closest('.slot');
+      b.remove();
+      s.style.pointerEvents = '';
+    });
+  } else {
+    br.remove();
+  }
+
+  closeBreakerDialog();
+  markChanges();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN DISCONNECT DIALOG
+═══════════════════════════════════════════════════════════════ */
+function openDialog(id) {
+  if (id === 'mainDialog') {
+    const cur = document.getElementById('main-amps').textContent.replace('A','');
+    document.getElementById('main-amps-input').value = cur;
+  }
+  if (id === 'headerDialog') {
+    document.getElementById('hdr-address-in').value  = headerState.address;
+    document.getElementById('hdr-date-in').value     = headerState.installDate;
+    document.getElementById('hdr-location-in').value = headerState.location;
+  }
+  if (id === 'footerDialog') {
+    document.getElementById('ftr-mfr-in').value      = footerState.manufacturer;
+    document.getElementById('ftr-model-in').value    = footerState.model;
+    document.getElementById('ftr-rating-in').value   = footerState.rating;
+    document.getElementById('ftr-voltage-in').value  = footerState.voltage;
+    document.getElementById('ftr-installer-in').value= footerState.installer;
+    document.getElementById('ftr-notes-in').value    = footerState.notes;
+  }
+  document.getElementById(id).showModal();
+}
+
+function saveMainDialog() {
+  const val = parseInt(document.getElementById('main-amps-input').value) || 200;
+  document.getElementById('main-amps').textContent = val + 'A';
+  document.getElementById('mainDialog').close();
+  markChanges();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER / FOOTER DIALOGS
+═══════════════════════════════════════════════════════════════ */
+function saveHeaderDialog() {
+  headerState.address     = document.getElementById('hdr-address-in').value.trim();
+  headerState.installDate = document.getElementById('hdr-date-in').value;
+  headerState.location    = document.getElementById('hdr-location-in').value.trim();
+  updateHeaderDisplay();
+  document.getElementById('headerDialog').close();
+  markChanges();
+}
+
+function updateHeaderDisplay() {
+  document.getElementById('hdr-address').textContent  = headerState.address  || '—';
+  document.getElementById('hdr-date').textContent     = headerState.installDate
+    ? new Date(headerState.installDate + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
+    : '—';
+  document.getElementById('hdr-location').textContent = headerState.location || '—';
+}
+
+function saveFooterDialog() {
+  footerState.manufacturer = document.getElementById('ftr-mfr-in').value.trim();
+  footerState.model        = document.getElementById('ftr-model-in').value.trim();
+  footerState.rating       = document.getElementById('ftr-rating-in').value.trim();
+  footerState.voltage      = document.getElementById('ftr-voltage-in').value.trim();
+  footerState.installer    = document.getElementById('ftr-installer-in').value.trim();
+  footerState.notes        = document.getElementById('ftr-notes-in').value.trim();
+  updateFooterDisplay();
+  document.getElementById('footerDialog').close();
+  markChanges();
+}
+
+function updateFooterDisplay() {
+  document.getElementById('ftr-mfr').textContent       = footerState.manufacturer || '—';
+  document.getElementById('ftr-model').textContent     = footerState.model        || '—';
+  document.getElementById('ftr-rating').textContent    = footerState.rating       || '—';
+  document.getElementById('ftr-voltage').textContent   = footerState.voltage      || '—';
+  document.getElementById('ftr-installer').textContent = footerState.installer    || '—';
+  document.getElementById('ftr-notes').textContent     = footerState.notes        || '—';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLEAR PANEL
+═══════════════════════════════════════════════════════════════ */
+function clearPanel() {
+  if (!confirm('Clear all breakers from the panel? This cannot be undone.')) return;
+  panel.querySelectorAll('.slot').forEach(s => s.remove());
+  createInitialPanel();
+  markChanges();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   AUTOSAVE
+═══════════════════════════════════════════════════════════════ */
+function markChanges() {
+  changesMade = true;
+  if (!autosaveTimer) startAutosave();
+  updateAutosaveDisplay();
+}
+
+function startAutosave() {
+  autosaveSecondsLeft = 30;
+  autosaveTimer = setInterval(() => {
+    autosaveSecondsLeft--;
+    updateAutosaveDisplay();
+    if (autosaveSecondsLeft <= 0) {
+      clearInterval(autosaveTimer);
+      autosaveTimer = null;
+      if (changesMade) savePanel(true);
+    }
+  }, 1000);
+}
+
+function updateAutosaveDisplay() {
+  const el = document.getElementById('autosave-status');
+  el.textContent = changesMade
+    ? `Auto-saving in ${autosaveSecondsLeft}s…`
+    : 'No changes pending.';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SERIALIZE PANEL → JSON PAYLOAD
+═══════════════════════════════════════════════════════════════ */
+function serializePanel() {
+  const breakers = [];
+  const seen = new Set();
+
+  panel.querySelectorAll('.slot').forEach(slot => {
+    const i  = parseInt(slot.dataset.index);
+    const br = slot.querySelector('.breaker');
+    if (!br) return;
+    if (br.classList.contains('subordinate')) return; // skip — captured via primary
+
+    const pairId = br.dataset.pairId || null;
+    const label  = br.querySelector('.breaker-label')?.textContent || '';
+    const ampsEl = br.querySelector('.breaker-amps');
+    const amps   = ampsEl ? parseInt(ampsEl.textContent) : 0;
+    const type   = [...br.classList].find(c => c.startsWith('type-'))?.replace('type-','') || 'Standard';
+    const poles  = pairId ? 2 : 1;
+
+    breakers.push({ index: i, label, amps, type, poles, pairId });
+  });
+
+  const mainAmps = parseInt(document.getElementById('main-amps').textContent) || 200;
+  const slotCount = panel.querySelectorAll('.slot').length;
+
+  return {
+    version: 3,
+    mainAmps,
+    slotCount,
+    header: { ...headerState },
+    footer: { ...footerState },
+    breakers
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SAVE TO LOCALSTORAGE
+═══════════════════════════════════════════════════════════════ */
+function savePanel(silent = false) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializePanel()));
+    changesMade = false;
+    clearInterval(autosaveTimer);
+    autosaveTimer = null;
+    updateAutosaveDisplay();
+    if (!silent) showToast('Panel saved to browser storage.');
+  } catch(e) {
+    if (!silent) alert('Save failed: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOAD FROM LOCALSTORAGE
+═══════════════════════════════════════════════════════════════ */
+function loadFromStorage() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) { alert('No saved panel found in browser storage.'); return; }
+  try {
+    const data = JSON.parse(raw);
+    applyPayload(data);
+    showToast('Panel loaded.');
+  } catch(e) {
+    alert('Could not load saved panel: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APPLY PAYLOAD (shared by load and import)
+═══════════════════════════════════════════════════════════════ */
+function applyPayload(data) {
+  if (!data || !Array.isArray(data.breakers)) throw new Error('Invalid panel file.');
+
+  // Rebuild slots
+  panel.querySelectorAll('.slot').forEach(s => s.remove());
+  const rows = Math.max(NUM_INITIAL_ROWS, Math.ceil((data.slotCount || data.breakers.length * 1.2 + 4) / 2));
+  for (let i = 0; i < rows * 2; i++) addSlotElement(i);
+
+  // Main amps
+  document.getElementById('main-amps').textContent = (data.mainAmps || 200) + 'A';
+
+  // Header / Footer
+  if (data.header) Object.assign(headerState, data.header);
+  if (data.footer) Object.assign(footerState, data.footer);
+  updateHeaderDisplay();
+  updateFooterDisplay();
+
+  // Breakers
+  pairCounter = 0;
+  data.breakers.forEach(b => {
+    const slot = getSlotEl(b.index);
+    if (!slot) return;
+
+    const pairId = b.poles === 2 ? (b.pairId || ('pair-' + (++pairCounter))) : '';
+    renderBreaker(slot, { label: b.label, amps: b.amps, type: b.type, pairId });
+
+    if (b.poles === 2) {
+      const nextSlot = getNextSlotEl(b.index);
+      if (nextSlot) {
+        renderBreaker(nextSlot, { label: b.label, amps: b.amps, type: b.type, pairId, isSubordinate: true });
+        nextSlot.style.pointerEvents = 'none';
+      }
+    }
+  });
+
+  changesMade = false;
+  updateAutosaveDisplay();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EXPORT JSON
+═══════════════════════════════════════════════════════════════ */
+function exportJSON() {
+  const payload = JSON.stringify(serializePanel(), null, 2);
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'breaker_panel.json';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('JSON exported.');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   IMPORT JSON
+═══════════════════════════════════════════════════════════════ */
+function importJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json,.json';
+  input.onchange = e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        applyPayload(data);
+        showToast('Panel imported.');
+      } catch(err) {
+        alert('Import failed — invalid or corrupted file.\n\n' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CLEAR STORAGE
+═══════════════════════════════════════════════════════════════ */
+function clearStorage() {
+  if (!confirm('Delete the saved panel from browser storage? The panel on screen is not affected.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  showToast('Saved panel deleted from browser storage.');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT / PNG EXPORT
+═══════════════════════════════════════════════════════════════ */
+function printPanel() {
+  // Save current theme, switch to light for print
+  const wasDark = document.body.classList.contains('dark');
+
+  // Use browser print (which triggers @media print with light-mode tokens)
+  // Offer PNG as a secondary option
+  const choice = confirm(
+    'Click OK to Print (or Save as PDF) — best for paper and high quality.\n\nClick Cancel to export a PNG image instead.'
+  );
+
+  if (choice) {
+    window.print();
+  } else {
+    exportPNG(wasDark);
+  }
+}
+
+async function exportPNG(wasDark) {
+  try {
+    // Force light mode for export
+    if (wasDark) document.body.classList.remove('dark');
+    document.body.classList.add('exporting');
+
+    const containerEl = document.getElementById('export-container');
+    const canvas = await html2canvas(containerEl, { scale: 3, backgroundColor: '#ffffff', useCORS: true });
+
+    document.body.classList.remove('exporting');
+    if (wasDark) document.body.classList.add('dark');
+
+    // Crop tight + add margin
+    const ctx = canvas.getContext('2d');
+    const { data: px, width: cw, height: ch } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let minX = cw, minY = ch, maxX = 0, maxY = 0;
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        if (px[(y * cw + x) * 4 + 3] > 0) {
+          if (x < minX) minX = x; if (x > maxX) maxX = x;
+          if (y < minY) minY = y; if (y > maxY) maxY = y;
+        }
+      }
+    }
+    const m = 24 * 3;
+    const out = document.createElement('canvas');
+    out.width  = (maxX - minX + 1) + m * 2;
+    out.height = (maxY - minY + 1) + m * 2;
+    const octx = out.getContext('2d');
+    octx.fillStyle = '#ffffff';
+    octx.fillRect(0, 0, out.width, out.height);
+    octx.drawImage(canvas, minX, minY, maxX - minX + 1, maxY - minY + 1, m, m, maxX - minX + 1, maxY - minY + 1);
+
+    const a = document.createElement('a');
+    a.href = out.toDataURL('image/png');
+    a.download = 'breaker_panel.png';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    showToast('PNG exported.');
+  } catch(err) {
+    document.body.classList.remove('exporting');
+    if (wasDark) document.body.classList.add('dark');
+    alert('PNG export failed: ' + err.message);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOAST NOTIFICATION
+═══════════════════════════════════════════════════════════════ */
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = [
+      'position:fixed','bottom:24px','left:50%','transform:translateX(-50%)',
+      'background:var(--text-primary)','color:var(--bg-card)',
+      'padding:9px 18px','border-radius:8px','font-size:13px','font-weight:500',
+      'font-family:"DM Sans",sans-serif','z-index:9999',
+      'box-shadow:0 4px 16px rgba(0,0,0,.25)','transition:opacity .3s',
+      'pointer-events:none'
+    ].join(';');
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════════════ */
+(function init() {
+  // Theme
+  const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+  applyTheme(savedTheme);
+
+  // Build panel
+  createInitialPanel();
+
+  // Display defaults
+  updateHeaderDisplay();
+  updateFooterDisplay();
+  buildLegend();
+  updateAutosaveDisplay();
+
+  // Auto-load if saved data exists
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      applyPayload(JSON.parse(saved));
+    } catch(e) {
+      // Corrupt data — just start fresh, don't bother the user
+    }
+  }
+})();
+</script>
+</body>
+</html>
