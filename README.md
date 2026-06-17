@@ -8,7 +8,7 @@ Everything runs entirely in a single HTML file — no accounts, no server, no bu
 
 #### Demo
 
-https://badbox29.github.io/residential_breaker_panel_diagrammer/
+https://badbox29.github.io/residental_breaker_panel_diagrammer/
 
 ---
 
