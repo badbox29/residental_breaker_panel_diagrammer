@@ -2130,141 +2130,116 @@ function showToast(msg) {
    MOVE BREAKER
 ═══════════════════════════════════════════════════════════════ */
 
-let _moveSourceIndex = null; // slot index of the breaker being moved
+let _moveSourceIndex = null;
 
 function enterMoveMode() {
-  // Close the dialog first
+  // Capture index before closing dialog (closeBreakerDialog nulls selectedSlotIndex)
+  const sourceIndex = selectedSlotIndex;
   closeBreakerDialog();
 
-  const sourceIndex = selectedSlotIndex;
   if (sourceIndex === null) return;
-
   const sourceSlot = getSlotEl(sourceIndex);
   const sourceBr = sourceSlot?.querySelector('.breaker');
   if (!sourceBr || sourceBr.classList.contains('subordinate')) return;
 
   _moveSourceIndex = sourceIndex;
-  selectedSlotIndex = null;
 
-  // Is this a 2-pole breaker?
   const isPole2 = !!sourceBr.dataset.pairId &&
     !!panel.querySelector(`.breaker[data-pair-id="${sourceBr.dataset.pairId}"].subordinate`);
 
-  // Enter move mode visually
+  // Enter move mode — intercept ALL panel clicks via a single delegated handler
   document.body.classList.add('move-mode');
 
-  // Update banner label
   const label = document.getElementById('move-mode-label');
-  if (isPole2) {
-    label.textContent = 'Click a green slot to move this 2-pole breaker (needs 2 consecutive empty slots). Blue = swap.';
-  } else {
-    label.textContent = 'Click a green slot to move, or a blue slot to swap with another breaker.';
-  }
+  label.textContent = isPole2
+    ? 'Select a destination (green = 2 consecutive empty slots). Esc to cancel.'
+    : 'Select a destination: green = empty slot, blue = swap with existing breaker. Esc to cancel.';
 
-  // Highlight source
+  // Mark source slot(s)
   sourceSlot.classList.add('move-source');
-
-  // Mark also the subordinate slot as source if 2-pole
   if (isPole2) {
     const pairId = sourceBr.dataset.pairId;
     const subBr = panel.querySelector(`.breaker[data-pair-id="${pairId}"].subordinate`);
-    if (subBr) subBr.closest('.slot')?.classList.add('move-source');
+    subBr?.closest('.slot')?.classList.add('move-source');
   }
 
-  // Classify all other slots
-  const slots = [...panel.querySelectorAll('.slot')];
-  slots.forEach(slot => {
-    const idx = parseInt(slot.dataset.index);
-    // Skip source slot(s)
+  // Classify destination slots
+  panel.querySelectorAll('.slot').forEach(slot => {
     if (slot.classList.contains('move-source')) return;
-
+    const idx = parseInt(slot.dataset.index);
     const br = slot.querySelector('.breaker');
 
     if (isPole2) {
-      // 2-pole: destination needs this slot + next-same-column slot both empty
       const nextSlot = getNextSlotEl(idx);
       if (!nextSlot || nextSlot.classList.contains('move-source')) return;
-      const nextBr = nextSlot.querySelector('.breaker');
-
-      if (!br && !nextBr) {
+      if (!br && !nextSlot.querySelector('.breaker')) {
         slot.classList.add('move-target-empty');
-        slot.addEventListener('click', _onMoveTargetClick, { once: false });
       }
-      // No swap support for 2-pole (too complex to explain cleanly)
     } else {
-      // 1-pole
       if (!br) {
         slot.classList.add('move-target-empty');
       } else if (!br.classList.contains('subordinate')) {
-        // Can swap with another primary (including 2-pole primaries if they fit)
         slot.classList.add('move-target-swap');
       }
-      slot.addEventListener('click', _onMoveTargetClick, { once: false });
     }
   });
+
+  // Single delegated click handler on the panel — fires before individual slot handlers
+  panel.addEventListener('click', _panelMoveHandler, true); // capture phase
 }
 
-function _onMoveTargetClick(e) {
-  // Only fire when in move mode
-  if (!document.body.classList.contains('move-mode')) return;
+function _panelMoveHandler(e) {
+  // Find the slot that was clicked
+  const targetSlot = e.target.closest('.slot');
+  if (!targetSlot) return;
 
-  const targetSlot = e.currentTarget;
-  if (!targetSlot.classList.contains('move-target-empty') &&
-      !targetSlot.classList.contains('move-target-swap')) return;
+  const isValidTarget = targetSlot.classList.contains('move-target-empty') ||
+                        targetSlot.classList.contains('move-target-swap');
 
-  const sourceIndex = _moveSourceIndex;
+  // Always stop propagation in move mode so normal slot click doesn't fire
+  e.stopPropagation();
+
+  if (!isValidTarget) {
+    // Clicked a non-target slot (source or non-highlighted) — cancel
+    cancelMoveMode();
+    return;
+  }
+
   const targetIndex = parseInt(targetSlot.dataset.index);
-
   snapshotForUndo();
-  _executeMoveOrSwap(sourceIndex, targetIndex);
+  _executeMoveOrSwap(_moveSourceIndex, targetIndex);
   cancelMoveMode();
   markChanges();
+  showToast('Breaker moved.');
 }
 
 function _executeMoveOrSwap(sourceIndex, targetIndex) {
   const sourceSlot = getSlotEl(sourceIndex);
   const targetSlot = getSlotEl(targetIndex);
   const sourceBr   = sourceSlot.querySelector('.breaker');
-
   if (!sourceBr) return;
 
-  const isPole2 = !!sourceBr.dataset.pairId &&
+  const isPole2  = !!sourceBr.dataset.pairId &&
     !!panel.querySelector(`.breaker[data-pair-id="${sourceBr.dataset.pairId}"].subordinate`);
-
   const targetBr = targetSlot.querySelector('.breaker');
   const isSwap   = !!targetBr && !targetBr.classList.contains('subordinate');
 
-  if (isSwap && !isPole2) {
-    // ── Swap: exchange source and target (both 1-pole) ──
-    const targetPairId = targetBr.dataset.pairId;
-    const targetIsPole2 = !!targetPairId &&
-      !!panel.querySelector(`.breaker[data-pair-id="${targetPairId}"].subordinate`);
-
-    // Collect source data
+  if (isSwap) {
+    // Collect both sides, clear both, re-place swapped
     const srcData = _collectBreakerData(sourceSlot);
-
-    // Collect target data
     const tgtData = _collectBreakerData(targetSlot);
-
-    // Clear both (and their subordinates if 2-pole)
     _clearSlotAndSubordinate(sourceSlot);
     _clearSlotAndSubordinate(targetSlot);
-
-    // Re-render source breaker at target location
     _placeBreakerData(targetSlot, srcData);
-
-    // Re-render target breaker at source location
     _placeBreakerData(sourceSlot, tgtData);
-
   } else {
-    // ── Move to empty slot ──
+    // Simple move to empty slot
     const srcData = _collectBreakerData(sourceSlot);
     _clearSlotAndSubordinate(sourceSlot);
     _placeBreakerData(targetSlot, srcData);
   }
 }
 
-// Collect all data needed to re-render a breaker (and its subordinate)
 function _collectBreakerData(slot) {
   const br = slot.querySelector('.breaker');
   if (!br) return null;
@@ -2278,7 +2253,6 @@ function _collectBreakerData(slot) {
   return { label, amps, type, pairId: isPole2 ? ('pair-' + (++pairCounter)) : '', isPole2 };
 }
 
-// Remove a breaker and its subordinate, restore pointer-events
 function _clearSlotAndSubordinate(slot) {
   const br = slot.querySelector('.breaker');
   if (!br) return;
@@ -2295,28 +2269,25 @@ function _clearSlotAndSubordinate(slot) {
   }
 }
 
-// Place a collected breaker data object into a slot
 function _placeBreakerData(slot, data) {
   if (!data) return;
   renderBreaker(slot, { label: data.label, amps: data.amps, type: data.type, pairId: data.pairId });
   if (data.isPole2) {
-    const idx = parseInt(slot.dataset.index);
-    const nextSlot = getNextSlotEl(idx);
+    const nextSlot = getNextSlotEl(parseInt(slot.dataset.index));
     if (nextSlot) {
-      renderBreaker(nextSlot, { label: data.label, amps: data.amps, type: data.type, pairId: data.pairId, isSubordinate: true });
+      renderBreaker(nextSlot, { label: data.label, amps: data.amps, type: data.type,
+                                pairId: data.pairId, isSubordinate: true });
       nextSlot.style.pointerEvents = 'none';
     }
   }
 }
 
 function cancelMoveMode() {
+  panel.removeEventListener('click', _panelMoveHandler, true);
   document.body.classList.remove('move-mode');
   _moveSourceIndex = null;
-
-  // Remove all move-mode classes and event listeners from slots
   panel.querySelectorAll('.slot').forEach(slot => {
     slot.classList.remove('move-source', 'move-target-empty', 'move-target-swap');
-    slot.removeEventListener('click', _onMoveTargetClick);
   });
 }
 
