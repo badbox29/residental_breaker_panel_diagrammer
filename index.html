@@ -691,6 +691,131 @@ dialog .dialog-btns {
 }
 
 /* ═══════════════════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════════════════════ */
+#ctx-menu {
+  position: fixed;
+  z-index: 500;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+  padding: 5px;
+  min-width: 200px;
+  display: none;
+  flex-direction: column;
+  gap: 1px;
+  font-family: 'DM Sans', sans-serif;
+}
+#ctx-menu.visible { display: flex; }
+
+.ctx-header {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-muted);
+}
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .1s, color .1s;
+  user-select: none;
+}
+.ctx-item:hover { background: var(--bg-card2); color: var(--text-primary); }
+.ctx-item.danger { color: var(--accent); }
+.ctx-item.danger:hover { background: var(--accent-dim); }
+.ctx-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 3px 5px;
+}
+.ctx-badge {
+  width: 36px; height: 16px;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .03em;
+}
+
+/* ═══════════════════════════════════════════════
+   PRESETS MODAL
+═══════════════════════════════════════════════ */
+.preset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.preset-badge {
+  width: 46px; height: 22px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.preset-info {
+  flex: 1;
+  min-width: 0;
+}
+.preset-info strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.preset-info span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'JetBrains Mono', monospace;
+}
+.preset-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.preset-btn {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.preset-btn:hover { background: var(--bg-card2); color: var(--text-primary); }
+.preset-btn.danger:hover { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
+
+/* ═══════════════════════════════════════════════
    MIGRATION MODAL
 ═══════════════════════════════════════════════ */
 #migrationDialog {
@@ -917,6 +1042,7 @@ body.exporting .no-export { display: none !important; }
   <div class="toolbar-row toolbar-row-secondary">
     <button class="btn btn-danger" onclick="clearPanel()" title="Clear all breakers"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 4 5 14 11 14 12 4"/><line x1="2" y1="4" x2="14" y2="4"/><line x1="6.5" y1="2" x2="9.5" y2="2"/><line x1="7" y1="7" x2="9" y2="11"/><line x1="9" y1="7" x2="7" y2="11"/></svg> <span class="btn-label">Clear Panel</span></button>
     <button class="btn btn-danger" onclick="clearStorage()" title="Delete saved panel from browser"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v3c0 1.1 2.686 2 6 2s6-.9 6-2V4"/><path d="M2 7v3c0 .8 1.8 1.5 4.5 1.8"/><line x1="11" y1="11" x2="15" y2="15"/><line x1="15" y1="11" x2="11" y2="15"/></svg> <span class="btn-label">Delete Saved</span></button>
+    <button class="btn" onclick="openPresetsModal()" title="Manage right-click presets"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="2"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.93 3.93l.7.7M11.37 11.37l.7.7M3.93 12.07l.7-.7M11.37 4.63l.7-.7"/></svg> <span class="btn-label">Presets</span></button>
     <button class="btn" onclick="document.getElementById('helpDialog').showModal()" title="Help &amp; type reference"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="7"/><path d="M6 6a2 2 0 1 1 2 2c0 1 0 1.5 0 2"/><circle cx="8" cy="12.5" r="0.5" fill="currentColor" stroke="none"/></svg> <span class="btn-label">Help</span></button>
     <span id="autosave-status">No changes pending.</span>
     <span id="last-saved"></span>
@@ -1166,6 +1292,32 @@ body.exporting .no-export { display: none !important; }
   </div>
 </dialog>
 
+<!-- Context Menu -->
+<div id="ctx-menu" role="menu"></div>
+
+<!-- Presets Modal -->
+<dialog id="presetsDialog" style="width:460px;max-width:94vw;">
+  <h3 style="margin-bottom:14px;">Right-click Presets</h3>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.5;margin-bottom:14px;">
+    These appear when you right-click an empty slot. Up to 10 presets.
+  </p>
+  <div class="preset-list" id="preset-list"></div>
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('presetsDialog').close()">Close</button>
+    <button class="btn btn-primary" id="add-preset-btn" onclick="openDialogForNewPreset()">+ Add Preset</button>
+  </div>
+</dialog>
+
+<!-- Preset Import Confirmation Dialog -->
+<dialog id="presetImportDialog" style="width:400px;max-width:94vw;">
+  <h3 style="margin-bottom:12px;">Import breaker presets?</h3>
+  <p id="preset-import-msg" style="font-size:13px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;"></p>
+  <div class="dialog-btns">
+    <button class="btn" onclick="document.getElementById('presetImportDialog').close()">Skip</button>
+    <button class="btn btn-primary" onclick="confirmPresetImport()">Replace My Presets</button>
+  </div>
+</dialog>
+
 <!-- Clear Panel Confirmation Dialog -->
 <dialog id="clearPanelDialog" style="width:420px;max-width:94vw;">
   <div style="text-align:center;font-size:36px;margin-bottom:8px;">⚠️</div>
@@ -1321,6 +1473,7 @@ function addSlotElement(index) {
   slot.dataset.index = index;
   renderSlotNumber(slot, index);
   slot.addEventListener('click', () => openBreakerDialog(index));
+  slot.addEventListener('contextmenu', e => showContextMenu(e, index));
   panel.appendChild(slot);
   return slot;
 }
@@ -1484,6 +1637,8 @@ function openBreakerDialog(index) {
 function closeBreakerDialog() {
   document.getElementById('breakerDialog').close();
   selectedSlotIndex = null;
+  _dialogMode = 'breaker';
+  _editingPresetIndex = -1;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1500,6 +1655,25 @@ function saveBreakerDialog() {
 
   const amps  = parseInt(document.getElementById('br-amps').value) || 15;
   const poles = parseInt(document.getElementById('br-poles').value);
+
+  // ── Preset mode: save to preset list instead of placing a breaker ──
+  if (_dialogMode === 'preset-new' || _dialogMode === 'preset-edit') {
+    const presets = loadPresets();
+    const preset = { label: type === 'Spare' ? 'Spare' : label, amps, type, poles };
+    if (_dialogMode === 'preset-new') {
+      presets.push(preset);
+    } else {
+      presets[_editingPresetIndex] = preset;
+    }
+    savePresets(presets);
+    _dialogMode = 'breaker';
+    _editingPresetIndex = -1;
+    closeBreakerDialog();
+    renderPresetList();
+    showToast(_dialogMode === 'preset-new' ? 'Preset added.' : 'Preset updated.');
+    return;
+  }
+
   const index = selectedSlotIndex;
   const slot  = getSlotEl(index);
 
@@ -1781,7 +1955,8 @@ function serializePanel() {
     slotCount,
     header: { ...headerState },
     footer: { ...footerState },
-    breakers
+    breakers,
+    presets: loadPresets()
   };
 }
 
@@ -1906,6 +2081,10 @@ function importJSON() {
           applyPayload(data);
           showToast('Panel imported.');
         }
+        // Offer to import presets if file contains them
+        if (Array.isArray(data.presets) && data.presets.length > 0) {
+          offerPresetImport(data.presets);
+        }
       } catch(err) {
         alert('Import failed — invalid or corrupted file.\n\n' + err.message);
       }
@@ -1961,6 +2140,9 @@ function confirmMigration() {
     // Mark as changed so autosave and the export reminder are both triggered
     markChanges();
     showToast('Panel imported and upgraded to v3 — remember to Export JSON to refresh your file.');
+    if (Array.isArray(_pendingImport?.presets) && _pendingImport.presets.length > 0) {
+      offerPresetImport(_pendingImport.presets);
+    }
   } catch(err) {
     _pendingImport = null;
     document.getElementById('migrationDialog').close();
@@ -2309,6 +2491,299 @@ function cancelMoveMode() {
     slot.classList.remove('move-source', 'move-target-empty', 'move-target-swap');
   });
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   PRESETS — storage, defaults, CRUD
+═══════════════════════════════════════════════════════════════ */
+const PRESETS_KEY = 'rPanelPresets';
+
+const DEFAULT_PRESETS = [
+  { label: 'General Lighting',   amps: 15, type: 'CAFI',     poles: 1 },
+  { label: 'General Outlets',    amps: 20, type: 'CAFI',     poles: 1 },
+  { label: 'Bathroom',           amps: 20, type: 'GFCI',     poles: 1 },
+  { label: 'Kitchen Outlets',    amps: 20, type: 'Dual',     poles: 1 },
+  { label: 'Garage / Outdoor',   amps: 20, type: 'GFCI',     poles: 1 },
+];
+
+function loadPresets() {
+  try {
+    const raw = localStorage.getItem(PRESETS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return DEFAULT_PRESETS.map(p => ({ ...p }));
+}
+
+function savePresets(presets) {
+  localStorage.setItem(PRESETS_KEY, JSON.stringify(presets));
+}
+
+/* ── Preset Modal ── */
+function openPresetsModal() {
+  renderPresetList();
+  document.getElementById('presetsDialog').showModal();
+}
+
+function renderPresetList() {
+  const presets = loadPresets();
+  const list = document.getElementById('preset-list');
+  list.innerHTML = '';
+
+  if (presets.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:16px;">No presets yet. Add one below.</div>';
+  }
+
+  presets.forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'preset-row';
+
+    const typeColors = {
+      Standard: { bg: 'var(--type-std-bg)',    fg: 'var(--type-std-fg)'    },
+      GFCI:     { bg: 'var(--type-gfci-bg)',   fg: 'var(--type-gfci-fg)'   },
+      AFCI:     { bg: 'var(--type-afci-bg)',   fg: 'var(--type-afci-fg)'   },
+      Dual:     { bg: 'var(--type-dual-bg)',   fg: 'var(--type-dual-fg)'   },
+      CAFI:     { bg: 'var(--type-cafi-bg)',   fg: 'var(--type-cafi-fg)'   },
+      Tandem:   { bg: 'var(--type-tandem-bg)', fg: 'var(--type-tandem-fg)' },
+      Surge:    { bg: 'var(--type-surge-bg)',  fg: 'var(--type-surge-fg)'  },
+      Spare:    { bg: 'var(--type-spare-bg)',  fg: 'var(--type-spare-fg)'  },
+    };
+    const col = typeColors[p.type] || typeColors.Standard;
+
+    row.innerHTML = `
+      <div class="preset-badge" style="background:${col.bg};color:${col.fg};">${typeToAbbr(p.type)}</div>
+      <div class="preset-info">
+        <strong>${escapeHtml(p.label || 'Spare')}</strong>
+        <span>${p.amps}A · ${p.type} · ${p.poles}-Pole</span>
+      </div>
+      <div class="preset-actions">
+        <button class="preset-btn" title="Edit" onclick="editPreset(${i})">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+        </button>
+        <button class="preset-btn danger" title="Delete" onclick="deletePreset(${i})">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 4 5 14 11 14 12 4"/><line x1="2" y1="4" x2="14" y2="4"/><line x1="6.5" y1="2" x2="9.5" y2="2"/></svg>
+        </button>
+      </div>`;
+    list.appendChild(row);
+  });
+
+  // Disable Add Preset if at max
+  const addBtn = document.getElementById('add-preset-btn');
+  if (addBtn) addBtn.disabled = presets.length >= 10;
+}
+
+function deletePreset(index) {
+  const presets = loadPresets();
+  presets.splice(index, 1);
+  savePresets(presets);
+  renderPresetList();
+}
+
+/* ── Reuse breaker dialog for presets ── */
+// _dialogMode: 'breaker' | 'preset-new' | 'preset-edit'
+let _dialogMode = 'breaker';
+let _editingPresetIndex = -1;
+
+function openDialogForNewPreset() {
+  _dialogMode = 'preset-new';
+  _editingPresetIndex = -1;
+  document.getElementById('breaker-dialog-title').textContent = 'New Preset';
+  document.getElementById('br-delete-btn').style.display = 'none';
+  document.getElementById('br-move-btn').style.display = 'none';
+  document.getElementById('br-label').value = '';
+  document.getElementById('br-label-count').textContent = '60 chars left';
+  document.getElementById('br-amps').value = 20;
+  document.getElementById('br-type').value = 'Standard';
+  document.getElementById('br-poles').value = '1';
+  document.getElementById('breakerDialog').showModal();
+  setTimeout(() => document.getElementById('br-label').focus(), 50);
+}
+
+function editPreset(index) {
+  const presets = loadPresets();
+  const p = presets[index];
+  if (!p) return;
+  _dialogMode = 'preset-edit';
+  _editingPresetIndex = index;
+  document.getElementById('breaker-dialog-title').textContent = 'Edit Preset';
+  document.getElementById('br-delete-btn').style.display = 'none';
+  document.getElementById('br-move-btn').style.display = 'none';
+  document.getElementById('br-label').value = p.label || '';
+  document.getElementById('br-label-count').textContent = (60 - (p.label || '').length) + ' chars left';
+  document.getElementById('br-amps').value = p.amps || 20;
+  document.getElementById('br-type').value = p.type || 'Standard';
+  document.getElementById('br-poles').value = String(p.poles || 1);
+  document.getElementById('breakerDialog').showModal();
+  setTimeout(() => document.getElementById('br-label').focus(), 50);
+}
+
+/* ── Preset import offer ── */
+let _pendingPresetImport = null;
+
+function offerPresetImport(presets) {
+  _pendingPresetImport = presets;
+  document.getElementById('preset-import-msg').textContent =
+    `This file includes ${presets.length} breaker preset${presets.length !== 1 ? 's' : ''}. Replace your current presets with these?`;
+  document.getElementById('presetImportDialog').showModal();
+}
+
+function confirmPresetImport() {
+  if (_pendingPresetImport) {
+    savePresets(_pendingPresetImport);
+    _pendingPresetImport = null;
+    showToast('Presets updated.');
+  }
+  document.getElementById('presetImportDialog').close();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTEXT MENU
+═══════════════════════════════════════════════════════════════ */
+const ctxMenu = document.getElementById('ctx-menu');
+let _ctxSlotIndex = null;
+
+function showContextMenu(e, slotIndex) {
+  e.preventDefault();
+  _ctxSlotIndex = slotIndex;
+
+  const slot = getSlotEl(slotIndex);
+  const br = slot?.querySelector('.breaker');
+  const isSubordinate = br?.classList.contains('subordinate');
+
+  // Build menu
+  ctxMenu.innerHTML = '';
+
+  if (isSubordinate) {
+    // Redirect to primary
+    const pairId = br.dataset.pairId;
+    const primaryBr = panel.querySelector(`.breaker[data-pair-id="${pairId}"]:not(.subordinate)`);
+    const primarySlot = primaryBr?.closest('.slot');
+    const primaryIdx = primarySlot ? parseInt(primarySlot.dataset.index) : null;
+
+    addCtxHeader('2-Pole Breaker (lower half)');
+    addCtxItem('Edit primary slot…', () => { hideCtxMenu(); if (primaryIdx !== null) openBreakerDialog(primaryIdx); });
+    addCtxItem('Move…', () => { hideCtxMenu(); if (primaryIdx !== null) { selectedSlotIndex = primaryIdx; enterMoveMode(); } }, false, svgMove());
+    addCtxDivider();
+    addCtxItem('Delete breaker', () => { hideCtxMenu(); if (primaryIdx !== null) { selectedSlotIndex = primaryIdx; deleteBreaker(); } }, true, svgTrash());
+
+  } else if (br) {
+    // Occupied primary slot
+    const label = br.querySelector('.breaker-label')?.textContent || '';
+    const ampsEl = br.querySelector('.breaker-amps');
+    const amps = ampsEl ? ampsEl.textContent : '';
+    const type = [...br.classList].find(c => c.startsWith('type-'))?.replace('type-', '') || 'Standard';
+    addCtxHeader(`${label} · ${amps} · ${type}`);
+    addCtxItem('Edit…', () => { hideCtxMenu(); openBreakerDialog(slotIndex); }, false, svgEdit());
+    addCtxItem('Move…', () => { hideCtxMenu(); selectedSlotIndex = slotIndex; enterMoveMode(); }, false, svgMove());
+    addCtxDivider();
+    addCtxItem('Delete breaker', () => {
+      hideCtxMenu();
+      snapshotForUndo();
+      const s = getSlotEl(slotIndex);
+      const b = s?.querySelector('.breaker');
+      if (!b) return;
+      const pid = b.dataset.pairId;
+      if (pid) {
+        panel.querySelectorAll(`.breaker[data-pair-id="${pid}"]`).forEach(x => {
+          const ps = x.closest('.slot'); x.remove(); ps.style.pointerEvents = '';
+        });
+      } else { b.remove(); }
+      markChanges();
+      showToast('Breaker deleted.');
+    }, true, svgTrash());
+
+  } else {
+    // Empty slot — show presets
+    const presets = loadPresets();
+    if (presets.length > 0) {
+      addCtxHeader('Quick Add');
+      presets.forEach((p, i) => {
+        const type = p.type || 'Standard';
+        const BADGE_COLORS = {
+          Standard: ['#00bcd4','#000'], GFCI: ['#4caf50','#000'], AFCI: ['#9e9e9e','#fff'],
+          Dual: ['#e040fb','#fff'], CAFI: ['#eeeeee','#000'], Tandem: ['#ff9800','#000'],
+          Surge: ['#3b82f6','#fff'], Spare: ['#d4d4d4','#555'],
+        };
+        const [bg, fg] = BADGE_COLORS[type] || BADGE_COLORS.Standard;
+        const badge = `<div class="ctx-badge" style="background:${bg};color:${fg};">${typeToAbbr(type)}</div>`;
+        addCtxItem(
+          `${p.label || 'Spare'} · ${p.amps}A`,
+          () => { hideCtxMenu(); applyPresetToSlot(slotIndex, p); },
+          false, badge
+        );
+      });
+      addCtxDivider();
+    }
+    addCtxItem('Add breaker…', () => { hideCtxMenu(); openBreakerDialog(slotIndex); }, false, svgPlus());
+  }
+
+  // Position — keep within viewport
+  const menuW = 220, menuH = ctxMenu.childElementCount * 34 + 20;
+  let x = e.clientX, y = e.clientY;
+  if (x + menuW > window.innerWidth  - 8) x = window.innerWidth  - menuW - 8;
+  if (y + menuH > window.innerHeight - 8) y = window.innerHeight - menuH - 8;
+  ctxMenu.style.left = x + 'px';
+  ctxMenu.style.top  = y + 'px';
+  ctxMenu.classList.add('visible');
+
+  setTimeout(() => document.addEventListener('click', _ctxOutsideClick, { once: true }), 0);
+  setTimeout(() => document.addEventListener('contextmenu', _ctxOutsideClick, { once: true }), 0);
+}
+
+function _ctxOutsideClick() { hideCtxMenu(); }
+
+function hideCtxMenu() {
+  ctxMenu.classList.remove('visible');
+  _ctxSlotIndex = null;
+  document.removeEventListener('click', _ctxOutsideClick);
+  document.removeEventListener('contextmenu', _ctxOutsideClick);
+}
+
+function addCtxHeader(text) {
+  const el = document.createElement('div');
+  el.className = 'ctx-header';
+  el.textContent = text;
+  ctxMenu.appendChild(el);
+}
+
+function addCtxItem(label, onClick, isDanger = false, iconHtml = '') {
+  const el = document.createElement('div');
+  el.className = 'ctx-item' + (isDanger ? ' danger' : '');
+  el.innerHTML = (iconHtml || '') + `<span>${escapeHtml(label)}</span>`;
+  el.addEventListener('click', onClick);
+  ctxMenu.appendChild(el);
+}
+
+function addCtxDivider() {
+  const el = document.createElement('div');
+  el.className = 'ctx-divider';
+  ctxMenu.appendChild(el);
+}
+
+function applyPresetToSlot(slotIndex, preset) {
+  const slot = getSlotEl(slotIndex);
+  if (!slot) return;
+
+  if (preset.poles === 2) {
+    const nextSlot = getNextSlotEl(slotIndex);
+    if (!nextSlot) { showToast('No room for 2-pole breaker at bottom of panel.'); return; }
+    if (nextSlot.querySelector('.breaker')) { showToast('Next slot is occupied — use Add breaker… to handle 2-pole placement.'); return; }
+    snapshotForUndo();
+    const pairId = 'pair-' + (++pairCounter);
+    renderBreaker(slot,     { label: preset.label, amps: preset.amps, type: preset.type, pairId });
+    renderBreaker(nextSlot, { label: preset.label, amps: preset.amps, type: preset.type, pairId, isSubordinate: true });
+    nextSlot.style.pointerEvents = 'none';
+  } else {
+    snapshotForUndo();
+    renderBreaker(slot, { label: preset.label, amps: preset.amps, type: preset.type, pairId: '' });
+  }
+  markChanges();
+  showToast(`Added: ${preset.label}`);
+}
+
+/* ── SVG helpers for context menu icons ── */
+function svgEdit()  { return '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>'; }
+function svgMove()  { return '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M8 2v12M2 8h12"/><polyline points="5 5 2 8 5 11"/><polyline points="11 5 14 8 11 11"/></svg>'; }
+function svgTrash() { return '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="4 4 5 14 11 14 12 4"/><line x1="2" y1="4" x2="14" y2="4"/><line x1="6.5" y1="2" x2="9.5" y2="2"/></svg>'; }
+function svgPlus()  { return '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><line x1="8" y1="3" x2="8" y2="13"/><line x1="3" y1="8" x2="13" y2="8"/></svg>'; }
 
 /* ═══════════════════════════════════════════════════════════════
    INIT
