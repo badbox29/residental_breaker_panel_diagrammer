@@ -915,11 +915,8 @@ body.exporting .no-export { display: none !important; }
   .topbar, .toolbar, .page-content > :not(#export-container),
   .no-export, .no-print, .info-edit-btn { display: none !important; }
 
-  /* ── Page setup ── */
+  /* ── Page setup — size/orientation injected dynamically via executePrint() ── */
   @page { margin: 10mm; }
-  body.print-landscape { }
-  @page { size: portrait; }
-  body.print-landscape + * { } /* placeholder — landscape handled below */
 
   /* ── Export container: full width, no decorations ── */
   #export-container {
@@ -1660,7 +1657,8 @@ function saveBreakerDialog() {
   if (_dialogMode === 'preset-new' || _dialogMode === 'preset-edit') {
     const presets = loadPresets();
     const preset = { label: type === 'Spare' ? 'Spare' : label, amps, type, poles };
-    if (_dialogMode === 'preset-new') {
+    const isNew = _dialogMode === 'preset-new'; // capture before reset
+    if (isNew) {
       presets.push(preset);
     } else {
       presets[_editingPresetIndex] = preset;
@@ -1670,7 +1668,7 @@ function saveBreakerDialog() {
     _editingPresetIndex = -1;
     closeBreakerDialog();
     renderPresetList();
-    showToast(_dialogMode === 'preset-new' ? 'Preset added.' : 'Preset updated.');
+    showToast(isNew ? 'Preset added.' : 'Preset updated.');
     return;
   }
 
@@ -2134,14 +2132,15 @@ function migrationChangelog(fromVersion) {
 function confirmMigration() {
   if (!_pendingImport) return;
   try {
+    const pendingPresets = Array.isArray(_pendingImport.presets) ? _pendingImport.presets : null;
     applyPayload(_pendingImport);
     _pendingImport = null;
     document.getElementById('migrationDialog').close();
     // Mark as changed so autosave and the export reminder are both triggered
     markChanges();
     showToast('Panel imported and upgraded to v3 — remember to Export JSON to refresh your file.');
-    if (Array.isArray(_pendingImport?.presets) && _pendingImport.presets.length > 0) {
-      offerPresetImport(_pendingImport.presets);
+    if (pendingPresets && pendingPresets.length > 0) {
+      offerPresetImport(pendingPresets);
     }
   } catch(err) {
     _pendingImport = null;
